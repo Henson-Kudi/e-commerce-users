@@ -25,7 +25,7 @@ app.use(morgan('dev'));
 const baseUrl = '/api/v1';
 
 // This just test. make sure to modify
-app.use(`${baseUrl}/identity`, router);
+app.use(`${baseUrl}`, router);
 
 // Attach error handler only attach all other route handlers
 app.use(errorRequestHandler);
@@ -34,22 +34,6 @@ export default function startExpressServer(): {
   server: Server;
   app: express.Application;
 } {
-  // { method: 'POST', path: '\\api\\v1\\identity\\groups\\group-roles' },
-  //   path
-  // method
-  // description
-  // application
-  // module
-  // console.log(JSON.stringify(listAllRoutes()?.map((item: any) => {
-  //   const path = item.path.replaceAll('\\', '/')
-  //   return({
-  //   ...item,
-  //  path,
-  //  description: slugify(path),
-  //  application: 'Identity Service',
-  //  module: 'Identity'
-  // })
-  // }), null, 2))
   const server = app.listen(PORT, () => {
     logger.info(`Server running on port http://localhost:${PORT}`);
   });

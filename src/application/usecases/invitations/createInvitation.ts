@@ -12,24 +12,26 @@ import kafkaTopics from '../../../utils/kafka-topics.json';
 import envConf from '../../../utils/env.conf';
 import logger from '../../../utils/logger';
 import ITokenManager from '../../providers/jwtManager';
+import IUserTokensRepository from '../../repositories/userTokensRepository';
+import IUserRepository from '../../repositories/userRepository';
 
 export default class CreateInvitation
   implements
-    UseCaseInterface<
-      {
-        invitor: string;
-        invitee: string;
-        roles?: string[];
-        expireAt?: Date;
-      },
-      IReturnValue<InvitationEntity>
-    >
-{
+  UseCaseInterface<
+    {
+      invitor: string;
+      invitee: string;
+      roles?: string[];
+      expireAt?: Date;
+    },
+    IReturnValue<InvitationEntity>
+  > {
   constructor(
     private readonly repository: IInvitationsRepository,
+    private readonly usersRepo: IUserRepository,
     private readonly messageBroker: IMessageBroker,
     private readonly tokenManager: ITokenManager
-  ) {}
+  ) { }
 
   async execute(params: {
     invitor: string;
@@ -39,6 +41,25 @@ export default class CreateInvitation
   }): Promise<IReturnValue<InvitationEntity>> {
     try {
       await validateCreateInvitation(params);
+
+      const invitor = await this.usersRepo.findUnique({
+        where: {
+          id: params.invitor,
+        }
+      })
+
+      if (!invitor) {
+        return {
+          success: false,
+          message: 'Invitor not found',
+          error: new ErrorClass(
+            'Invitor not found',
+            ResponseCodes.NotFound,
+            null,
+            Errors.NotFound
+          ),
+        };
+      }
 
       const expiryDate = moment().add(2, 'weeks').toDate();
 
@@ -60,7 +81,7 @@ export default class CreateInvitation
         },
       });
 
-      //   Inform message broker to send email to invitee
+      //   Inform message broker to send email to invitee. Note that user should be able to accept invitation only after successfully registering
       try {
         await this.messageBroker.publish({
           topic: kafkaTopics.sendEmail,
@@ -68,7 +89,7 @@ export default class CreateInvitation
             {
               value: JSON.stringify({
                 to: params.invitee,
-                message: `You have been invited to join AlbaCorp. Click this link to signup: ${envConf.frontEndUrl}/register?token=${this.tokenManager.generateToken(TokenType.REFRESH_TOKEN, { invitorId: created.id })}`,
+                message: `You have been invited to join ${envConf.AppName}. Click this link to accept or decline invitation: ${envConf.frontEndUrl}/invitations?token=${this.tokenManager.generateToken(TokenType.REFRESH_TOKEN, { invitorId: created.id })}`,
               }),
             },
           ],

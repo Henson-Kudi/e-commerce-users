@@ -62,6 +62,21 @@ router
 
 router
   .route('/invitation/:id')
+  // .post(
+  //   verifyPermission(ResourceAccessType.Write, 'invitations', [
+  //     StaticRoles.Editor,
+  //   ]),
+  //   augmentRequestQuery('invitor'),
+  //   removeInvitation
+  // )
+  // .put(
+  //   verifyPermission(ResourceAccessType.Read, 'invitations', [
+  //     StaticRoles.Viewer,
+  //     StaticRoles.Editor,
+  //   ]),
+  //   augmentRequestQuery('invitor'),
+  //   getInvitations
+  // ) // We need to add methods to accept and reject invitations
   .delete(
     verifyPermission(ResourceAccessType.Delete, 'invitations', [
       StaticRoles.Editor,

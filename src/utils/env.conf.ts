@@ -1,6 +1,7 @@
 /* eslint-disable no-process-env */
 
 export default {
+  AppName: "@HK Solutions",
   NODE_ENV: process.env.NODE_ENV || 'development',
   frontEndUrl: process.env.FRONT_END_URL || 'http://localhost:400',
   JWT: {
