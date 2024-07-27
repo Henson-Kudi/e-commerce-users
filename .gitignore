@@ -1,0 +1,13 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+# Keep history and local vscode config out of version control
+.history
+.vscode
+
+# Keep compiled code away from version control
+dist
+
+# Keep logs away from version control
+logs

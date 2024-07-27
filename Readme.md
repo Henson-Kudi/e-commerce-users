@@ -1,0 +1,7 @@
+# ALBA CORP IDENTITY SERVICE
+
+## Folder Structure (Overview)
+
+src/ - domain/ - entities: defination of schema objects - valueObjects: Not necessarily entities/dtos but relevant for functionality - dtos: Data Transfer Objects - enums: enums - application/ => orchestrates flow of data between the domain layer and interface adapters and the external system. Also known as _usecase layer_ - repositories: Defines interfaces for database data access - usecases: orchestrates flow of data between the domain layer and interface adapters and the external system. - providers: Defines interfaces for external services (message broker, password manager, jwt, etc) - infrastructure: Em=ncompass interactions with all external systems. implementation of application's repositories and providers (for database access) and express (for managing requests and responses). - data-access/ Used for data manipulation and retrieval - database/postgres: initialise postgres database with prisma client. - repositories - providers: implementation of application's providers - external/ For other external communications (maybe elastic search) - presentation - express/ main http request server - routes: express routes management - middlewares: express middlewares - adapter: express adapter for transforming requests to required objects - http/ - controllers: http request controllers - utils/ utilities that can be used anywhere in the app - validation/ - joi: joi validation schemas -
+test/ - usecases - controllers
+...

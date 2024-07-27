@@ -1,0 +1,232 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TokenType {
+  OTP
+  ACCESS_TOKEN
+  REFRESH_TOKEN
+}
+
+model User {
+  id                String      @id @default(uuid())
+  email             String      @unique
+  emailVerified     Boolean     @default(false)
+  name              String
+  phone             String      @unique
+  phoneVerified     Boolean     @default(false)
+  password          String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  isActive          Boolean     @default(true)
+  isDeleted         Boolean     @default(false)
+  deletedAt         DateTime?
+  deletedBy         User?       @relation("DeletedByUsers", fields: [deletedById], references: [id])
+  deletedById       String?
+  lastModifiedBy         User?       @relation("UpdatedByUsers", fields: [lastModifiedById], references: [id])
+  lastModifiedById       String?
+  invitedBy         User?       @relation("InvitedByUsers", fields: [invitedById], references: [id])
+  invitedById       String?
+  roles             UserRole[]
+  groups            UserGroup[]
+  tokens            UserToken[]
+  invitations       Invitation[]
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  lastLoginDevice   String?
+  lastLoginLocation String?
+  googleId          String?
+  appleId           String?
+  photo             String?
+
+  deletedUsers      User[]      @relation("DeletedByUsers")
+  updatedUsers      User[]      @relation("UpdatedByUsers")
+  invitedUsers      User[]      @relation("InvitedByUsers")
+
+  groupsDeleted     Group[] @relation("GroupsDeleted")
+  groupsCreated     Group[] @relation("GroupsCreated")
+  groupsModified    Group[] @relation("GroupsUpdated")
+
+  rolesDeleted     Role[] @relation("RolesDeleted")
+  rolesCreated     Role[] @relation("RolesCreated")
+  rolesModified    Role[] @relation("RolesUpdated")
+
+  permisionsDeleted     Permission[] @relation("PermissionsDeleted")
+  permisionsCreated     Permission[] @relation("PermissionsCreated")
+  permisionsModified    Permission[] @relation("PermissionsUpdated")
+
+  userGroupsCreated    UserGroup[] @relation("UserGroupsCreated")
+
+  userRolesCreated  UserRole[]             @relation("UserRolesCreated")
+  groupRolesCreated  GroupRole[]             @relation("GroupRolesCreated")
+  rolePermissionsCreated  RolePermission[]             @relation("RolePermission")
+}
+
+model Group {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   User       @relation("GroupsCreated", fields: [createdById], references: [id])
+  createdById   String
+  isActive    Boolean     @default(true)
+
+  isDeleted   Boolean     @default(false)
+  deletedAt   DateTime?
+  deletedBy   User?       @relation("GroupsDeleted", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById String?
+
+  lastModifiedBy   User?       @relation("GroupsUpdated", fields: [lastModifiedById], references: [id], onDelete: SetNull)
+  lastModifiedById String?
+
+  users       UserGroup[]
+  roles       GroupRole[]
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  slug        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt // automatically tracks lastModifiedAt
+  createdBy   User       @relation("RolesCreated", fields: [createdById], references: [id])
+  createdById   String
+  isActive    Boolean          @default(true)
+  
+  isDeleted   Boolean     @default(false)
+  deletedAt   DateTime?
+  deletedBy   User?       @relation("RolesDeleted", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById String?
+  
+  lastModifiedBy   User?       @relation("RolesUpdated", fields: [lastModifiedById], references: [id], onDelete: SetNull)
+  lastModifiedById String?
+
+  users       UserRole[]
+  groups      GroupRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id         String           @id @default(uuid())
+  module     String
+  resource   String
+  permission String //This is going to use linux permissions structure (3 quadrants of rwud -> read,write,update,delete) separated with a pipe (|). For  each quadrant, accepted values are: rwud-. A dash (-) means no access to resource. Example: rwu- means permission has no delete access to resources. rw-- means permission has read and write access but not permitted to update and delete resources.
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  createdBy  User             @relation("PermissionsCreated", fields: [createdById], references: [id])
+  createdById String
+  isActive   Boolean          @default(true)
+
+  isDeleted   Boolean     @default(false)
+  deletedAt   DateTime?
+  deletedBy   User?       @relation("PermissionsDeleted", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedById String?
+  
+  lastModifiedBy   User?       @relation("PermissionsUpdated", fields: [lastModifiedById], references: [id], onDelete: SetNull)
+  lastModifiedById String?
+
+  roles      RolePermission[]
+
+  @@unique([module, permission, resource])
+}
+
+model UserGroup {
+  id      String @id @default(uuid())
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  createdBy  User?             @relation("UserGroupsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+
+  @@unique([userId, groupId])
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId String
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  createdBy  User?             @relation("UserRolesCreated", fields: [createdById], references: [id])
+  createdById String
+
+  @@unique([userId, roleId])
+}
+
+model GroupRole {
+  id      String @id @default(uuid())
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+  role    Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId  String
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  createdBy  User?             @relation("GroupRolesCreated", fields: [createdById], references: [id])
+  createdById String
+
+  @@unique([groupId, roleId])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
+
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  createdBy  User?             @relation("RolePermission", fields: [createdById], references: [id])
+  createdById String
+
+  @@unique([roleId, permissionId])
+}
+
+model UserToken {
+  id       String    @id @default(uuid())
+  type     TokenType
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  token    String
+  device   String?
+  ip       String?
+  expireAt DateTime
+
+  @@unique([type, userId])
+}
+
+// Model for invitations
+model Invitation {
+  id  String  @id @default(uuid())
+  invitor User @relation(fields: [invitorId], references: [id])
+  invitorId String
+  invitee   String  @unique
+  roles    String[]
+  expireAt  DateTime  @default(dbgenerated("now() + interval '2 weeks'"))
+}
