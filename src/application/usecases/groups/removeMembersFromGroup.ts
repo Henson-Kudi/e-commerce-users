@@ -4,39 +4,40 @@ import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
-import { GroupMembersQuery } from '../../../domain/dtos/user-groups/findUserGroups';
-import IUserGroupRepository from '../../repositories/userGroupRepository';
-import setupGroupUsersQuery from '../utils/setupGroupUsersQuery';
+import IGroupRepository from '../../repositories/groupsRepository';
+import setupGroupsQuery from '../utils/setupGroupsQuery';
+import { GroupQuery } from '../../../domain/dtos/groups/findGroups';
+import { GroupEntity } from '../../../domain/entities';
 
 export default class RemoveMembersFromGroup
   implements
     UseCaseInterface<
       {
-        filter: GroupMembersQuery & {
-          groups: string;
+        filter: GroupQuery & {
+          id: string;
         };
         data: { users: string[]; actor?: string };
       },
-      IReturnValue<{ matchedCount: number }>
+      IReturnValue<GroupEntity>
     >
 {
   constructor(
-    private readonly repository: IUserGroupRepository,
+    private readonly repository: IGroupRepository,
     private readonly providers: { messageBroker: IMessageBroker }
   ) {}
 
   async execute(params: {
-    filter: GroupMembersQuery & {
-      groups: string;
+    filter: GroupQuery & {
+      id: string;
     };
     data: { users: string[]; actor?: string };
-  }): Promise<IReturnValue<{ matchedCount: number }>> {
+  }): Promise<IReturnValue<GroupEntity>> {
     try {
       const { messageBroker } = this.providers;
       const { data, filter } = params;
 
       // We need to make sure all the users that has to be deleted, user actually has permission to delete
-      const query = setupGroupUsersQuery({
+      const query = setupGroupsQuery({
         ...filter,
         users: data.users,
       });
@@ -55,10 +56,16 @@ export default class RemoveMembersFromGroup
           ),
         };
 
-      const result = await this.repository.deleteMany({
+      const result = await this.repository.update({
         where: {
-          groupId: filter.groups,
-          userId: { in: data.users },
+          id: filter.id,
+        },
+        data: {
+          users: {
+            disconnect: data.users.map((id) => ({
+              id,
+            })),
+          },
         },
       });
 
@@ -68,7 +75,7 @@ export default class RemoveMembersFromGroup
         messages: [
           {
             value: JSON.stringify({
-              group: filter.groups,
+              group: filter.id,
               ...data,
             }),
           },

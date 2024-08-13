@@ -66,7 +66,10 @@ export default function setupGroupsQuery(
   }
 
   if (query.name) {
-    response.name = query.name;
+    response.name = {
+      contains: query.name,
+      mode: 'insensitive',
+    };
   }
 
   if (query.deletedBy) {
@@ -85,7 +88,7 @@ export default function setupGroupsQuery(
     const roles = { in: query.roles?.map((item) => item?.trim()) };
     response.roles = {
       some: {
-        roleId: roles,
+        id: roles,
       },
     };
   }
@@ -94,7 +97,7 @@ export default function setupGroupsQuery(
     const users = { in: query.users?.map((item) => item?.trim()) };
     response.users = {
       some: {
-        userId: users,
+        id: users,
       },
     };
   }

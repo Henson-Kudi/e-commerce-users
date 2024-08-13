@@ -4,7 +4,7 @@ import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import { validateUpdatePermission } from '../../../utils/joi/schemas/permissionSchema';
 import IMessageBroker from '../../providers/messageBroker';
-import IPermissionRepository from '../../repositories/iPermissionRepository';
+import IPermissionRepository from '../../repositories/permissionRepository';
 import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import Joi from 'joi';
@@ -87,10 +87,7 @@ export default class UpdatePermission
           roles: data?.roles?.length
             ? {
                 connect: data.roles.map((role) => ({
-                  roleId_permissionId: {
-                    roleId: role,
-                    permissionId: filter.id,
-                  },
+                  id: role,
                 })),
               }
             : undefined,

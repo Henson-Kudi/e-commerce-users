@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { IUpdateUserPasswordDTO } from '../../../domain/dtos/user/IUpdateUser';
-import { UserEntity, UserTokenEntity } from '../../../domain/entities';
+import { UserEntity, TokenEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import UseCaseInterface from '../protocols';
 import ErrorClass from '../../../domain/valueObjects/customError';
@@ -10,6 +10,8 @@ import IMessageBroker from '../../providers/messageBroker';
 import { DefaultUserFieldsToSelect } from '../../../utils/constants/user';
 import IUserRepository from '../../repositories/userRepository';
 import IUserTokensRepository from '../../repositories/userTokensRepository';
+import IPasswordManager from '../../providers/passwordManager';
+import { userUpdated } from '../../../utils/kafka-topics.json';
 
 export default class ChangeUserPassword
   implements
@@ -22,18 +24,19 @@ export default class ChangeUserPassword
     },
     private readonly providers: {
       messageBroker: IMessageBroker;
+      passwordManager: IPasswordManager;
     }
   ) {}
 
   async execute(params: IUpdateUserPasswordDTO): Promise<
     IReturnValue<
       | (UserEntity & {
-          tokens?: UserTokenEntity[];
+          tokens?: TokenEntity[];
         })
       | null
     >
   > {
-    const { messageBroker } = this.providers;
+    const { messageBroker, passwordManager } = this.providers;
     const { tokensRepository, usersRepository } = this.repositories;
 
     try {
@@ -41,26 +44,24 @@ export default class ChangeUserPassword
       await validateChangePassword(params);
 
       // Ensure that user is active and not deleted
-      const foundUser = (
-        await usersRepository.find({
-          where: {
-            id: params.id,
-          },
-          include: {
-            tokens: {
-              // Only select tokens that are valid (not expired) and are otp token
-              where: {
-                expireAt: {
-                  gte: new Date(),
-                },
-                type: TokenType.OTP,
+      const foundUser = (await usersRepository.findUnique({
+        where: {
+          id: params.id,
+        },
+        include: {
+          tokens: {
+            // Only select tokens that are valid (not expired) and are otp token
+            where: {
+              expireAt: {
+                gte: new Date(),
               },
+              type: TokenType.OTP,
             },
           },
-        })
-      )[0];
+        },
+      })) as UserEntity & { tokens?: TokenEntity[] };
 
-      if (!foundUser.isActive || foundUser.isDeleted) {
+      if (!foundUser || !foundUser.isActive || foundUser.isDeleted) {
         return {
           success: false,
           message: 'User not found',
@@ -75,7 +76,7 @@ export default class ChangeUserPassword
       }
 
       //   Ensure user is not using third party login already
-      if (foundUser.googleId || foundUser.appleId || !foundUser.password) {
+      if (foundUser?.googleId || foundUser?.appleId || !foundUser?.password) {
         return {
           success: false,
           message: 'Wrong authentication method',
@@ -110,12 +111,16 @@ export default class ChangeUserPassword
       }
 
       // Update user details
+      const encryptedPassword = await passwordManager.encryptPassword(
+        params.password
+      );
+
       const updated = await usersRepository.update({
         where: {
           id: params.id,
         },
         data: {
-          phone: params.password,
+          password: encryptedPassword,
         },
         select: DefaultUserFieldsToSelect,
       });
@@ -125,7 +130,7 @@ export default class ChangeUserPassword
 
       // Publish with message broker
       await messageBroker.publish({
-        topic: 'user.updated',
+        topic: userUpdated,
         messages: [
           {
             value: JSON.stringify({

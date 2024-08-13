@@ -63,9 +63,14 @@ export default function setupUserQuery(query?: UserQuery): UsersWhereFilter {
     const groups = { in: query.groups?.map((item) => item?.trim()) };
     response.groups = {
       some: {
-        group: {
-          name: groups,
-        },
+        OR: [
+          {
+            id: groups,
+          },
+          {
+            name: groups,
+          },
+        ],
       },
     };
   }
@@ -114,9 +119,12 @@ export default function setupUserQuery(query?: UserQuery): UsersWhereFilter {
     const roles = { in: query.roles?.map((item) => item?.trim()) };
     response.roles = {
       some: {
-        role: {
-          name: roles,
-        },
+        OR: [
+          {
+            name: roles,
+          },
+          { id: roles },
+        ],
       },
     };
   }

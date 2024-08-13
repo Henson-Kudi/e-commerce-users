@@ -14,6 +14,7 @@ export type DeleteUserQuery = Prisma.UserDeleteManyArgs;
 export type RolesDbClient = Prisma.RoleDelegate;
 export type CreateRoleQuery = Prisma.RoleCreateArgs;
 export type FindRolesQuery = Prisma.RoleFindManyArgs;
+export type FindOneRoleQuery = Prisma.RoleFindUniqueArgs;
 export type RolesWhereFilter = Prisma.RoleWhereInput;
 export type RolesWhereUniqueFilter = Prisma.RoleWhereUniqueInput;
 export type UpdateRoleQuery = Prisma.RoleUpdateArgs;
@@ -40,34 +41,6 @@ export type UpdateGroupQuery = Prisma.GroupUpdateArgs;
 export type UpdateManyGroupsQuery = Prisma.GroupUpdateManyArgs;
 export type DeleteGroupQuery = Prisma.GroupDeleteManyArgs;
 
-// USER GROUPS
-export type UserGroupsDbClient = Prisma.UserGroupDelegate;
-export type FindUserGroupQuery = Prisma.UserGroupFindManyArgs;
-export type GroupMembersWhereFilter = Prisma.UserGroupWhereInput;
-export type CreateUserGroupQuery = Prisma.UserGroupCreateArgs;
-export type UpsertUserGroupQuery = Prisma.UserGroupUpsertArgs;
-export type UpdateUserGroupQuery = Prisma.UserGroupUpdateArgs;
-export type DeleteUserGroupQuery = Prisma.UserGroupDeleteManyArgs;
-
-// USER ROLES
-export type UserRolesDbClient = Prisma.UserRoleDelegate;
-export type CreateUserRoleQuery = Prisma.UserRoleCreateArgs;
-export type UpsertUserRoleQuery = Prisma.UserRoleUpsertArgs;
-export type FindUserRoleQuery = Prisma.UserRoleFindManyArgs;
-export type UserRolesWhereFilter = Prisma.UserRoleWhereInput;
-export type UpdateUserRoleQuery = Prisma.UserRoleUpdateArgs;
-export type DeleteUserRoleQuery = Prisma.UserRoleDeleteManyArgs;
-
-// GROUP ROLES
-export type GroupRolesDbClient = Prisma.GroupRoleDelegate;
-export type CreateGroupRoleQuery = Prisma.GroupRoleCreateArgs;
-export type UpsertGroupRoleQuery = Prisma.GroupRoleUpsertArgs;
-export type FindGroupRoleQuery = Prisma.GroupRoleFindManyArgs;
-export type FindOneGroupRoleQuery = Prisma.GroupRoleFindUniqueArgs;
-export type GroupRolesWhereFilter = Prisma.GroupRoleWhereInput;
-export type UpdateGroupRoleQuery = Prisma.GroupRoleUpdateArgs;
-export type DeleteGroupRoleQuery = Prisma.GroupRoleDeleteManyArgs;
-
 // INVITATIONS
 export type InvitationsDbClient = Prisma.InvitationDelegate;
 export type CreateInvitationQuery = Prisma.InvitationCreateArgs;
@@ -78,19 +51,12 @@ export type InvitationsWhereFilter = Prisma.InvitationWhereInput;
 export type UpdateInvitationQuery = Prisma.InvitationUpdateArgs;
 export type DeleteInvitationQuery = Prisma.InvitationDeleteManyArgs;
 
-// ROLE PERMISSIONS
-export type RolePermissionsDbClient = Prisma.RolePermissionDelegate;
-export type CreateRolePermissionQuery = Prisma.RolePermissionCreateArgs;
-export type UpsertRolePermissionQuery = Prisma.RolePermissionUpsertArgs;
-export type FindRolePermissionQuery = Prisma.RolePermissionFindManyArgs;
-export type FindUniqueRolePermissionQuery = Prisma.RolePermissionFindUniqueArgs;
-export type RolePermissionsWhereFilter = Prisma.RolePermissionWhereInput;
-export type UpdateRolePermissionQuery = Prisma.RolePermissionUpdateArgs;
-export type DeleteRolePermissionQuery = Prisma.RolePermissionDeleteManyArgs;
-
-// ROLE PERMISSIONS
-export type UserTokensDbClient = Prisma.UserTokenDelegate;
-export type FindUserTokenQuery = Prisma.UserTokenFindManyArgs;
-export type CreateUserTokenQuery = Prisma.UserTokenCreateArgs;
-export type UpdateUserTokenQuery = Prisma.UserTokenUpdateArgs;
-export type UserTokenDeleteQuery = Prisma.UserTokenDeleteManyArgs;
+// TOKENS
+export type TokensDbClient = Prisma.TokenDelegate;
+export type CreateTokenQuery = Prisma.TokenCreateArgs;
+export type UpsertTokenQuery = Prisma.TokenUpsertArgs;
+export type FindTokenQuery = Prisma.TokenFindManyArgs;
+export type FindOneTokenQuery = Prisma.TokenFindUniqueArgs;
+export type TokensWhereFilter = Prisma.TokenWhereInput;
+export type UpdateTokenQuery = Prisma.TokenUpdateArgs;
+export type DeleteTokenQuery = Prisma.TokenDeleteManyArgs;

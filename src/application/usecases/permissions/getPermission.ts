@@ -1,7 +1,7 @@
 import { PermissionQuery } from '../../../domain/dtos/permissions/findPermissions';
 import { PermissionEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
-import IPermissionRepository from '../../repositories/iPermissionRepository';
+import IPermissionRepository from '../../repositories/permissionRepository';
 import UseCaseInterface from '../protocols';
 import setupPermissionsQuery from '../utils/setupPermissionsQuery';
 
@@ -27,16 +27,9 @@ export default class GetPermission
 
     const found = await this.repository.find({
       where: query,
-      include:
-        params.withRoles && params?.withRoles === 'true'
-          ? {
-              roles: {
-                include: {
-                  role: true,
-                },
-              },
-            }
-          : undefined,
+      include: {
+        roles: params.withRoles === true || params.withRoles === 'true',
+      },
     });
 
     if (!found[0]) {

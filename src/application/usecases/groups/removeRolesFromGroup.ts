@@ -1,42 +1,43 @@
-import { GroupRoleQuery } from '../../../domain/dtos/group-roles/findGroupRoles';
 import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IGroupRoleRepository from '../../repositories/groupRolesRepository';
+import IGroupRepository from '../../repositories/groupsRepository';
 import UseCaseInterface from '../protocols';
-import setupGroupRolesQuery from '../utils/setupGroupRolesQuery';
 import kafkaTopics from '../../../utils/kafka-topics.json';
+import { GroupQuery } from '../../../domain/dtos/groups/findGroups';
+import { GroupEntity } from '../../../domain/entities';
+import setupGroupsQuery from '../utils/setupGroupsQuery';
 
 export default class RemoveRolesFromGroup
   implements
     UseCaseInterface<
       {
-        filter: GroupRoleQuery & {
-          groups: string;
+        filter: GroupQuery & {
+          id: string;
         };
         data: { roles: string[]; actor?: string };
       },
-      IReturnValue<{ matchedCount: number }>
+      IReturnValue<GroupEntity>
     >
 {
   constructor(
-    private readonly repository: IGroupRoleRepository,
+    private readonly repository: IGroupRepository,
     private readonly providers: { messageBroker: IMessageBroker }
   ) {}
 
   async execute(params: {
-    filter: GroupRoleQuery & {
-      groups: string;
+    filter: GroupQuery & {
+      id: string;
     };
     data: { roles: string[]; actor?: string };
-  }): Promise<IReturnValue<{ matchedCount: number }>> {
+  }): Promise<IReturnValue<GroupEntity>> {
     try {
       const { messageBroker } = this.providers;
       const { data, filter } = params;
 
       // We need to make sure all the roles that has to be deleted, user actually has permission to delete
-      const query = setupGroupRolesQuery({
+      const query = setupGroupsQuery({
         ...filter,
         roles: data.roles,
       });
@@ -55,10 +56,14 @@ export default class RemoveRolesFromGroup
           ),
         };
 
-      const result = await this.repository.deleteMany({
+      const result = await this.repository.update({
         where: {
-          groupId: filter.groups,
-          roleId: { in: data.roles },
+          id: filter.id,
+        },
+        data: {
+          roles: {
+            disconnect: data.roles.map((id) => ({ id })),
+          },
         },
       });
 
@@ -68,7 +73,7 @@ export default class RemoveRolesFromGroup
         messages: [
           {
             value: JSON.stringify({
-              group: filter.groups,
+              group: filter.id,
               ...data,
             }),
           },

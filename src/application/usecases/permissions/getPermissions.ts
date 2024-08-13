@@ -3,7 +3,7 @@ import { PermissionEntity } from '../../../domain/entities';
 import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import { IReturnValueWithPagination } from '../../../domain/valueObjects/returnValue';
-import IPermissionRepository from '../../repositories/iPermissionRepository';
+import IPermissionRepository from '../../repositories/permissionRepository';
 import UseCaseInterface from '../protocols';
 import setupPermissionsQuery from '../utils/setupPermissionsQuery';
 
@@ -25,7 +25,8 @@ export default class GetPermissions
     const orderBy =
       options?.sort && Object.keys(options?.sort).length ? options?.sort : {};
 
-    const withRoles = options?.withRoles && options?.withRoles === 'true';
+    const withRoles =
+      options?.withRoles === true || options?.withRoles === 'true';
 
     // Select and include cannot be used at same time, so if there is include, we want to delete select
 
@@ -44,7 +45,7 @@ export default class GetPermissions
         },
 
         include: {
-          roles: withRoles ? { include: { role: true } } : false,
+          roles: withRoles,
         },
 
         skip: skip,

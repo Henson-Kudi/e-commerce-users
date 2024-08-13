@@ -12,26 +12,26 @@ import kafkaTopics from '../../../utils/kafka-topics.json';
 import envConf from '../../../utils/env.conf';
 import logger from '../../../utils/logger';
 import ITokenManager from '../../providers/jwtManager';
-import IUserTokensRepository from '../../repositories/userTokensRepository';
 import IUserRepository from '../../repositories/userRepository';
 
 export default class CreateInvitation
   implements
-  UseCaseInterface<
-    {
-      invitor: string;
-      invitee: string;
-      roles?: string[];
-      expireAt?: Date;
-    },
-    IReturnValue<InvitationEntity>
-  > {
+    UseCaseInterface<
+      {
+        invitor: string;
+        invitee: string;
+        roles?: string[];
+        expireAt?: Date;
+      },
+      IReturnValue<InvitationEntity>
+    >
+{
   constructor(
     private readonly repository: IInvitationsRepository,
     private readonly usersRepo: IUserRepository,
     private readonly messageBroker: IMessageBroker,
     private readonly tokenManager: ITokenManager
-  ) { }
+  ) {}
 
   async execute(params: {
     invitor: string;
@@ -45,8 +45,8 @@ export default class CreateInvitation
       const invitor = await this.usersRepo.findUnique({
         where: {
           id: params.invitor,
-        }
-      })
+        },
+      });
 
       if (!invitor) {
         return {

@@ -6,9 +6,9 @@ import { Errors, ResponseCodes } from '../../../../domain/enums';
 import RequestObject from '../../../../utils/types/request';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 import { RefreshTokenName } from '../../../../utils/constants/tokens';
 
@@ -17,9 +17,9 @@ export default class RefreshAccessToken
     IContoller<
       IReturnValue<
         | (UserEntity & {
-            roles?: UserRoleEntity[];
-            groups?: UserGroupEntity[];
-            tokens?: UserTokenEntity[];
+            roles?: RoleEntity[];
+            groups?: GroupEntity[];
+            tokens?: TokenEntity[];
           })
         | null
       >
@@ -30,9 +30,9 @@ export default class RefreshAccessToken
   handle(request: RequestObject): Promise<
     IReturnValue<
       | (UserEntity & {
-          roles?: UserRoleEntity[];
-          groups?: UserGroupEntity[];
-          tokens?: UserTokenEntity[];
+          roles?: RoleEntity[];
+          groups?: GroupEntity[];
+          tokens?: TokenEntity[];
         })
       | null
     >

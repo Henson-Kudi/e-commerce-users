@@ -4,9 +4,9 @@ import { AuthService } from '../../../../application/services/authService';
 import RequestObject from '../../../../utils/types/request';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 
 export default class Login
@@ -14,9 +14,9 @@ export default class Login
     IContoller<
       IReturnValue<
         | (UserEntity & {
-            roles?: UserRoleEntity[];
-            groups?: UserGroupEntity[];
-            tokens?: UserTokenEntity[];
+            roles?: RoleEntity[];
+            groups?: GroupEntity[];
+            tokens?: TokenEntity[];
           })
         | null
       >
@@ -27,9 +27,9 @@ export default class Login
   handle(request: RequestObject): Promise<
     IReturnValue<
       | (UserEntity & {
-          roles?: UserRoleEntity[];
-          groups?: UserGroupEntity[];
-          tokens?: UserTokenEntity[];
+          roles?: RoleEntity[];
+          groups?: GroupEntity[];
+          tokens?: TokenEntity[];
         })
       | null
     >

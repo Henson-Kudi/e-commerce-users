@@ -1,20 +1,22 @@
-import { RolePermissionEntity } from '../../../domain/entities';
+import { PermissionEntity, RoleEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IRolePermissionRepository from '../../repositories/iRolePermission';
+import IRoleRepository from '../../repositories/roleRepository';
 import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
+import ErrorClass from '../../../domain/valueObjects/customError';
+import { Errors, ResponseCodes } from '../../../domain/enums';
 
 export default class AttachPermissionsToRole
   implements
     UseCaseInterface<
       { permissions: string[]; actor: string; roleId: string },
-      IReturnValue<RolePermissionEntity[]>
+      IReturnValue<RoleEntity & { permissions?: PermissionEntity[] }>
     >
 {
   constructor(
-    private readonly repository: IRolePermissionRepository,
+    private readonly repository: IRoleRepository,
     private readonly messageBroker: IMessageBroker
   ) {}
 
@@ -22,29 +24,53 @@ export default class AttachPermissionsToRole
     permissions: string[];
     actor: string;
     roleId: string;
-  }): Promise<IReturnValue<RolePermissionEntity[]>> {
+  }): Promise<IReturnValue<RoleEntity & { permissions?: PermissionEntity[] }>> {
+    // Ensure role exists
+    const foundRole = await this.repository.findUnique({
+      where: {
+        id: data.roleId,
+      },
+    });
+
+    if (!foundRole || foundRole.isDeleted) {
+      return {
+        success: false,
+        error: new ErrorClass(
+          'Requested entity not found',
+          ResponseCodes.BadRequest,
+          null,
+          Errors.BadRequest
+        ),
+      };
+    }
+
+    if (!foundRole.isActive) {
+      return {
+        success: false,
+        error: new ErrorClass(
+          'Please activate  role first',
+          ResponseCodes.BadRequest,
+          null,
+          Errors.BadRequest
+        ),
+      };
+    }
     // Attach permissions to role
-    const rolePermissions = await Promise.all(
-      data.permissions.map((permission) => {
-        return this.repository.createUpsert({
-          where: {
-            roleId_permissionId: {
-              roleId: data.roleId,
-              permissionId: permission,
-            },
-          },
-          update: {},
-          create: {
-            roleId: data.roleId,
-            permissionId: permission,
-            createdById: data.actor,
-          },
-          include: {
-            role: true,
-          },
-        });
-      })
-    );
+    const updated = await this.repository.update({
+      where: {
+        id: data.roleId,
+        isActive: true,
+        isDeleted: false,
+      },
+      data: {
+        permissions: {
+          connect: data.permissions.map((id) => ({
+            id,
+          })),
+        },
+        lastModifiedById: data.actor,
+      },
+    });
 
     // Publish to broker
     try {
@@ -54,7 +80,8 @@ export default class AttachPermissionsToRole
           {
             value: JSON.stringify({
               role: data.roleId,
-              ...data,
+              newPermissions: data.permissions,
+              addedBy: data.actor,
             }),
           },
         ],
@@ -65,7 +92,7 @@ export default class AttachPermissionsToRole
 
     return {
       success: true,
-      data: rolePermissions,
+      data: updated,
       message: 'Permission attached to role successfully.',
     };
   }

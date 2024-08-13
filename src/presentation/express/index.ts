@@ -35,7 +35,7 @@ export default function startExpressServer(): {
   app: express.Application;
 } {
   const server = app.listen(PORT, () => {
-    logger.info(`Server running on port http://localhost:${PORT}`);
+    logger.info(`Server running on: http://localhost:${PORT}`);
   });
 
   return {

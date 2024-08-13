@@ -1,7 +1,5 @@
 import messageBroker from '../../infrastructure/providers/messageBroker';
-import GroupRolesRepository from '../../infrastructure/repositories/postgres/groupRolesRepository';
 import GroupsRepository from '../../infrastructure/repositories/postgres/groupsRepository';
-import UserGroupsRepository from '../../infrastructure/repositories/postgres/userGroupsRepository';
 import AddRolesToGroup from '../usecases/groups/addRolesToGroup';
 import AddMembersToGroup from '../usecases/groups/addUsersToGroup';
 import CreateGroup from '../usecases/groups/createGroup';
@@ -15,14 +13,12 @@ import UpdateGroup from '../usecases/groups/updateGroup';
 export class GroupsService {
   private readonly repository = new GroupsRepository();
   private readonly messenger = messageBroker;
-  private readonly groupRolesRepository = new GroupRolesRepository();
-  private readonly userGroupsRepository = new UserGroupsRepository();
 
-  addRolesToGroup = new AddRolesToGroup(this.groupRolesRepository, {
+  addRolesToGroup = new AddRolesToGroup(this.repository, {
     messageBroker: this.messenger,
   }).execute;
 
-  addUsersToGroup = new AddMembersToGroup(this.userGroupsRepository, {
+  addUsersToGroup = new AddMembersToGroup(this.repository, {
     messageBroker: this.messenger,
   }).execute;
 
@@ -36,14 +32,13 @@ export class GroupsService {
 
   updateGroup = new UpdateGroup(this.repository, this.messenger).execute;
 
-  deleteRolesFromGroup = new RemoveRolesFromGroup(this.groupRolesRepository, {
+  deleteRolesFromGroup = new RemoveRolesFromGroup(this.repository, {
     messageBroker: this.messenger,
   }).execute;
 
-  deleteMembersFromGroup = new RemoveMembersFromGroup(
-    this.userGroupsRepository,
-    { messageBroker: this.messenger }
-  ).execute;
+  deleteMembersFromGroup = new RemoveMembersFromGroup(this.repository, {
+    messageBroker: this.messenger,
+  }).execute;
 }
 
 export default new GroupsService();

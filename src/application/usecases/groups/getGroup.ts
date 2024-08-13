@@ -23,7 +23,7 @@ export default class GetGroup
     params: Partial<Record<keyof Omit<GroupQuery, 'search'>, string>> & {
       id: string;
       withRoles?: boolean;
-      withUsers: boolean;
+      withUsers?: boolean;
     }
   ): Promise<
     IReturnValue<GroupEntity & { roles?: RoleEntity[]; users?: UserEntity[] }>
@@ -38,8 +38,8 @@ export default class GetGroup
         id: params.id,
       },
       include: {
-        roles: params.withRoles ? { include: { role: true } } : false,
-        users: params?.withUsers ? { include: { user: true } } : false,
+        roles: params.withRoles,
+        users: params?.withUsers,
       },
     });
 

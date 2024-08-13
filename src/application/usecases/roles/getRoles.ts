@@ -3,7 +3,7 @@ import { RoleEntity } from '../../../domain/entities';
 import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import { IReturnValueWithPagination } from '../../../domain/valueObjects/returnValue';
-import IRoleRepository from '../../repositories/RoleRepository';
+import IRoleRepository from '../../repositories/roleRepository';
 import UseCaseInterface from '../protocols';
 import setupRoleQuery from '../utils/setupRolesQuery';
 
@@ -26,37 +26,12 @@ export default class GetRoles
     const orderBy =
       options?.sort && Object.keys(options?.sort).length ? options?.sort : {};
 
-    const includeQuery: {
-      groups?: { [key: string]: unknown };
-      users?: { [key: string]: unknown };
-      permissions?: { [key: string]: unknown };
-    } = {};
-
-    const withUsers = options?.withUsers && options?.withUsers === 'true';
-    const withGroups = options?.withGroups && options?.withGroups === 'true';
+    const withUsers =
+      options?.withUsers === true || options?.withUsers === 'true';
+    const withGroups =
+      options?.withGroups === true || options?.withGroups === 'true';
     const withPermissions =
-      options?.withPermissions && options?.withPermissions === 'true';
-
-    // Setup joints for roles and groups (if present)
-    if (withUsers) {
-      includeQuery.users = {
-        include: { user: true },
-      };
-    }
-
-    if (withGroups) {
-      includeQuery.groups = {
-        include: { group: true },
-      };
-    }
-
-    if (withPermissions) {
-      includeQuery.permissions = {
-        permissions: {
-          include: { permission: true },
-        },
-      };
-    }
+      options?.withPermissions === true || options?.withPermissions === 'true';
 
     // Pagination setup
     const limit = options?.limit ? options?.limit : 10;
@@ -71,13 +46,10 @@ export default class GetRoles
         orderBy: {
           ...orderBy,
         },
-
         include: {
-          users: withUsers ? { include: { user: true } } : false,
-          groups: withGroups ? { include: { group: true } } : false,
-          permissions: withPermissions
-            ? { include: { permission: true } }
-            : false,
+          users: withUsers,
+          groups: withGroups,
+          permissions: withPermissions,
         },
 
         skip: skip,

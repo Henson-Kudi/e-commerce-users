@@ -3,10 +3,10 @@ import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IGroupRoleRepository from '../../repositories/groupRolesRepository';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import UseCaseInterface from '../protocols';
 import logger from '../../../utils/logger';
+import IGroupsRepository from '../../repositories/groupsRepository';
 
 export default class AddRolesToGroup
   implements
@@ -16,7 +16,7 @@ export default class AddRolesToGroup
     >
 {
   constructor(
-    private readonly repository: IGroupRoleRepository,
+    private readonly repository: IGroupsRepository,
     private readonly providers: {
       messageBroker: IMessageBroker;
     }
@@ -30,41 +30,50 @@ export default class AddRolesToGroup
       // Add data validation
       const { messageBroker } = this.providers;
 
-      const added = await Promise.all(
-        data.roles.map((roleId) =>
-          this.repository.createUpsert({
-            where: {
-              groupId_roleId: {
-                roleId,
-                groupId: data.groupId,
-              },
-            },
-            update: {},
-            create: {
-              roleId,
-              groupId: data.groupId,
-              createdById: data.actor,
-            },
-            include: {
-              role: true,
-              group: true,
-            },
-          })
-        )
-      );
+      // Ensure group exist
+      const foundGroup = await this.repository.findOne({
+        where: { id: data.groupId },
+      });
 
-      if (!added.length) {
+      if (!foundGroup || foundGroup.isDeleted) {
         return {
           success: false,
-          message: 'No roles added to group',
           error: new ErrorClass(
-            'No roles added to group',
-            ResponseCodes.ServerError,
+            'Requested group not found',
+            ResponseCodes.BadRequest,
             null,
-            Errors.ServerError
+            Errors.BadRequest
           ),
         };
       }
+
+      if (!foundGroup.isActive) {
+        return {
+          success: false,
+          error: new ErrorClass(
+            'Cannot update an inactive entity',
+            ResponseCodes.BadRequest,
+            null,
+            Errors.BadRequest
+          ),
+        };
+      }
+
+      const updatedGroup = await this.repository.update({
+        where: {
+          id: data.groupId,
+        },
+        data: {
+          roles: {
+            connect: data.roles.map((roleId) => ({
+              id: roleId,
+            })),
+          },
+        },
+        include: {
+          roles: true,
+        },
+      });
 
       // Publish message of roles added
       try {
@@ -73,7 +82,8 @@ export default class AddRolesToGroup
             {
               value: JSON.stringify({
                 group: data.groupId,
-                ...data,
+                newRoles: data.roles,
+                addedBy: data.actor,
               }),
             },
           ],
@@ -85,12 +95,7 @@ export default class AddRolesToGroup
 
       return {
         success: true,
-        data: {
-          ...added[0].group!,
-          roles:
-            added?.map((item) => item.role).filter((item) => item != null) ??
-            [],
-        },
+        data: updatedGroup,
       };
     } catch (err) {
       const error = err as Error;

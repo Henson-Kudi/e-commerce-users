@@ -1,27 +1,27 @@
 import IRepository from '.';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../domain/entities';
 import {
-  CreateUserTokenQuery,
-  FindUserTokenQuery,
-  UpdateUserTokenQuery,
-  UserTokenDeleteQuery,
+  CreateTokenQuery,
+  FindTokenQuery,
+  UpdateTokenQuery,
+  DeleteTokenQuery,
 } from '../../infrastructure/repositories/protocols';
 
 export default interface IUserTokensRepository
   extends IRepository<
-    UserTokenEntity & {
+    TokenEntity & {
       user?: UserEntity & {
-        groups?: UserGroupEntity[];
-        roles?: UserRoleEntity[];
+        groups?: GroupEntity[];
+        roles?: RoleEntity[];
       };
     },
-    CreateUserTokenQuery,
-    FindUserTokenQuery,
-    UpdateUserTokenQuery,
-    UserTokenDeleteQuery
+    CreateTokenQuery,
+    FindTokenQuery,
+    UpdateTokenQuery,
+    DeleteTokenQuery
   > {}

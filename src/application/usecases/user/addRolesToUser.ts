@@ -3,7 +3,7 @@ import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IUserRoleRepository from '../../repositories/userRoleRepository';
+import IUserRepository from '../../repositories/userRepository';
 import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
@@ -16,7 +16,7 @@ export default class AddRolesToUser
     >
 {
   constructor(
-    private readonly repository: IUserRoleRepository,
+    private readonly repository: IUserRepository,
     private readonly providers: {
       messageBroker: IMessageBroker;
     }
@@ -28,43 +28,43 @@ export default class AddRolesToUser
     userId: string;
   }): Promise<IReturnValue<UserEntity & { roles?: RoleEntity[] }>> {
     try {
-      const added = await Promise.all(
-        data.roles.map((roleId) =>
-          this.repository.createUpsert({
-            where: {
-              userId_roleId: {
-                userId: data.userId.trim(),
-                roleId: roleId.trim(),
-              },
-            },
-            update: {},
-            create: {
-              userId: data.userId.trim(),
-              roleId: roleId.trim(),
-              createdById: data.actor,
-            },
-            include: {
-              user: true,
-              role: true,
-            },
-          })
-        )
-      );
+      // Ensure that this user exist
+      const foundUser = await this.repository.findUnique({
+        where: { id: data.userId },
+      });
 
-      const user = added.find((item) => item.user);
-
-      if (!user || !user.user) {
+      if (!foundUser || foundUser.isDeleted) {
         return {
           success: false,
-          message: 'No roles were added to the user',
           error: new ErrorClass(
-            'No roles were added to the user',
+            'Cannot find entity with such id',
             ResponseCodes.BadRequest,
             null,
             Errors.BadRequest
           ),
         };
       }
+
+      if (!foundUser.isActive) {
+        return {
+          success: false,
+          error: new ErrorClass(
+            'User is inactive. Please activate user first',
+            ResponseCodes.BadRequest,
+            null,
+            Errors.BadRequest
+          ),
+        };
+      }
+      const updatedUser = await this.repository.update({
+        where: { id: data.userId },
+        data: {
+          roles: {
+            connect: data.roles.map((id) => ({ id })),
+          },
+          lastModifiedById: data.actor,
+        },
+      });
 
       // Publish to message queue
       try {
@@ -74,7 +74,8 @@ export default class AddRolesToUser
             {
               value: JSON.stringify({
                 user: data.userId,
-                ...data,
+                newRoles: data.roles,
+                addedBy: data.actor,
               }),
             },
           ],
@@ -85,12 +86,7 @@ export default class AddRolesToUser
 
       return {
         success: true,
-        data: {
-          ...user.user,
-          roles: added
-            .map((item) => item?.role)
-            ?.filter((item) => item != null),
-        },
+        data: updatedUser,
       };
     } catch (err) {
       const error = err as Error;

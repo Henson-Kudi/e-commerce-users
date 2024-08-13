@@ -55,12 +55,12 @@ export default class CreateGroup
           slug: slug,
           roles: data.roles
             ? {
-                create: data.roles.map((id) => ({ role: { connect: { id } } })),
+                connect: data.roles.map((id) => ({ id })),
               }
             : undefined,
           users: data.users
             ? {
-                create: data.users.map((id) => ({ user: { connect: { id } } })),
+                connect: data.users.map((id) => ({ id })),
               }
             : undefined,
         },

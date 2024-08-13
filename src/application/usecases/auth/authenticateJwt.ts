@@ -1,8 +1,8 @@
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../domain/entities';
 import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
@@ -26,9 +26,9 @@ export default class AuthenticateJwt
   async execute({ token, type }: { token: string; type: TokenType }): Promise<
     IReturnValue<
       UserEntity & {
-        roles?: UserRoleEntity[];
-        groups?: UserGroupEntity[];
-        tokens?: UserTokenEntity[];
+        roles?: RoleEntity[];
+        groups?: GroupEntity[];
+        tokens?: TokenEntity[];
       }
     >
   > {
@@ -65,29 +65,18 @@ export default class AuthenticateJwt
       }
 
       // Get user
-      const user = (
-        await this.repository.find({
-          where: {
-            id: decodedToken.userId,
-            isActive: true,
-            isDeleted: false,
-          },
-          include: {
-            roles: {
-              include: {
-                role: true,
-              },
-            },
-            groups: {
-              include: {
-                group: true,
-              },
-            },
-            tokens: true,
-          },
-          take: 1,
-        })
-      )[0];
+      const user = await this.repository.findUnique({
+        where: {
+          id: decodedToken.userId,
+          isActive: true,
+          isDeleted: false,
+        },
+        include: {
+          roles: true,
+          groups: true,
+          tokens: true,
+        },
+      });
 
       if (!user) {
         return {

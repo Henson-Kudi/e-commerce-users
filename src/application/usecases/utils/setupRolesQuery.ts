@@ -72,9 +72,7 @@ export default function setupRoleQuery(query?: RoleQuery): RolesWhereFilter {
     const groups = { in: query.groups?.map((item) => item?.trim()) };
     response.groups = {
       some: {
-        group: {
-          name: groups,
-        },
+        id: groups,
       },
     };
   }
@@ -87,9 +85,7 @@ export default function setupRoleQuery(query?: RoleQuery): RolesWhereFilter {
     const users = { in: query.users?.map((item) => item?.trim()) };
     response.users = {
       some: {
-        user: {
-          id: users,
-        },
+        id: users,
       },
     };
   }
@@ -102,9 +98,7 @@ export default function setupRoleQuery(query?: RoleQuery): RolesWhereFilter {
     const permissions = { in: query.permissions?.map((item) => item?.trim()) };
     response.permissions = {
       some: {
-        permission: {
-          id: permissions,
-        },
+        id: permissions,
       },
     };
   }

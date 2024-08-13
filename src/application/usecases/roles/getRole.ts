@@ -1,7 +1,7 @@
 import { RoleQuery } from '../../../domain/dtos/roles/findRoles';
 import { RoleEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
-import IRoleRepository from '../../repositories/RoleRepository';
+import IRoleRepository from '../../repositories/roleRepository';
 import UseCaseInterface from '../protocols';
 import setupRoleQuery from '../utils/setupRolesQuery';
 
@@ -32,18 +32,10 @@ export default class GetRole
     const found = await this.repository.find({
       where: query,
       include: {
-        users:
-          params.withUsers && params?.withUsers === 'true'
-            ? { include: { user: true } }
-            : false,
-        groups:
-          params.withGroups && params?.withGroups === 'true'
-            ? { include: { group: true } }
-            : false,
+        users: params.withUsers === true || params?.withUsers === 'true',
+        groups: params.withGroups === true || params?.withGroups === 'true',
         permissions:
-          params.withPermissions && params?.withPermissions === 'true'
-            ? { include: { permission: true } }
-            : false,
+          params.withPermissions === true || params?.withPermissions === 'true',
       },
     });
 

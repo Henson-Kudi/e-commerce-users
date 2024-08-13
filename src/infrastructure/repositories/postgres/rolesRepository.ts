@@ -1,13 +1,14 @@
 import {
   CreateRoleQuery,
   DeleteRoleQuery,
+  FindOneRoleQuery,
   FindRolesQuery,
   RolesDbClient,
   UpdateRoleQuery,
 } from '../protocols';
 import prisma from '../../database/postgres';
 import { RoleEntity } from '../../../domain/entities';
-import IRoleRepository from '../../../application/repositories/RoleRepository';
+import IRoleRepository from '../../../application/repositories/roleRepository';
 
 export default class RolesRepository implements IRoleRepository {
   private readonly dbClient: RolesDbClient = prisma.role;
@@ -33,6 +34,10 @@ export default class RolesRepository implements IRoleRepository {
     const found = this.dbClient.findMany(query);
 
     return found;
+  }
+
+  findUnique(query: FindOneRoleQuery): Promise<RoleEntity | null> {
+    return this.dbClient.findUnique(query);
   }
 
   // Use this if you want to delete a user and all relational data of this user.

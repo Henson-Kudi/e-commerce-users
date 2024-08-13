@@ -1,4 +1,5 @@
 import { RoleService } from '../../../../application/services/roleService';
+import { RoleEntity } from '../../../../domain/entities';
 import { Errors, ResponseCodes } from '../../../../domain/enums';
 import ErrorClass from '../../../../domain/valueObjects/customError';
 import IReturnValue from '../../../../domain/valueObjects/returnValue';
@@ -6,12 +7,10 @@ import RequestObject from '../../../../utils/types/request';
 import IContoller from '../IController';
 
 export default class RemoveRolePermissions
-  implements IContoller<IReturnValue<{ matchedCount: number }>>
+  implements IContoller<IReturnValue<RoleEntity>>
 {
   constructor(private readonly service: RoleService) {}
-  public handle(
-    request: RequestObject
-  ): Promise<IReturnValue<{ matchedCount: number }>> {
+  public handle(request: RequestObject): Promise<IReturnValue<RoleEntity>> {
     if (!request.headers?.userId || !request.params?.id) {
       return new Promise((res) => {
         return res({

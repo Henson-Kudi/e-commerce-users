@@ -5,9 +5,9 @@ import { UsersService } from '../../../../application/services/usersService';
 import { QueryUserParams } from '../../../../domain/dtos/user/IFindUser';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 
 export default class GetUsers
@@ -15,9 +15,9 @@ export default class GetUsers
     IContoller<
       IReturnValueWithPagination<
         | (UserEntity & {
-            roles?: UserRoleEntity[];
-            groups?: UserGroupEntity[];
-            tokens?: UserTokenEntity[];
+            roles?: RoleEntity[];
+            groups?: GroupEntity[];
+            tokens?: TokenEntity[];
           })[]
         | null
       >
@@ -28,9 +28,9 @@ export default class GetUsers
   handle(request: RequestObject): Promise<
     IReturnValueWithPagination<
       | (UserEntity & {
-          roles?: UserRoleEntity[];
-          groups?: UserGroupEntity[];
-          tokens?: UserTokenEntity[];
+          roles?: RoleEntity[];
+          groups?: GroupEntity[];
+          tokens?: TokenEntity[];
         })[]
       | null
     >

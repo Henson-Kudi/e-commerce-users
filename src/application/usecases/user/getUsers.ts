@@ -1,11 +1,11 @@
 import { QueryUserParams } from '../../../domain/dtos/user/IFindUser';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../domain/entities';
-import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
+import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import { IReturnValueWithPagination } from '../../../domain/valueObjects/returnValue';
 import { DefaultUserFieldsToSelect } from '../../../utils/constants/user';
@@ -19,9 +19,9 @@ export default class GetUsers
       QueryUserParams,
       IReturnValueWithPagination<
         | (UserEntity & {
-            tokens?: UserTokenEntity[];
-            groups?: UserGroupEntity[];
-            roles?: UserRoleEntity[];
+            tokens?: TokenEntity[];
+            groups?: GroupEntity[];
+            roles?: RoleEntity[];
           })[]
         | null
       >
@@ -32,9 +32,9 @@ export default class GetUsers
   async execute(params: QueryUserParams): Promise<
     IReturnValueWithPagination<
       | (UserEntity & {
-          tokens?: UserTokenEntity[];
-          groups?: UserGroupEntity[];
-          roles?: UserRoleEntity[];
+          tokens?: TokenEntity[];
+          groups?: GroupEntity[];
+          roles?: RoleEntity[];
         })[]
       | null
     >
@@ -42,48 +42,15 @@ export default class GetUsers
     const { options } = params;
     const query = setupUserQuery(params.filter);
 
-    const includeQuery: {
-      groups?: { [key: string]: unknown };
-      roles?: { [key: string]: unknown };
-      tokens?: { [key: string]: unknown };
-    } = {};
-
     const orderBy =
       options?.sort && Object.keys(options?.sort).length ? options?.sort : {};
 
-    const withRoles = options?.withRoles && options?.withRoles === 'true';
-    const withGroups = options?.withGroups && options?.withGroups === 'true';
-    const withTokens = options?.withTokens && options?.withTokens === 'true';
-
-    // Setup joints for roles and groups (if present)
-    if (withRoles) {
-      includeQuery.roles = {
-        include: { role: true },
-      };
-    }
-
-    if (withGroups) {
-      includeQuery.groups = {
-        include: { group: true },
-      };
-    }
-
-    if (withTokens) {
-      includeQuery.tokens = {
-        tokens: {
-          where: {
-            expireAt: {
-              gte: new Date(),
-            },
-            type: {
-              not: TokenType.OTP,
-            },
-          },
-        },
-      };
-    }
-
-    // Select and include cannot be used at same time, so if there is include, we want to delete select
+    const withRoles =
+      options?.withRoles === true || options?.withRoles === 'true';
+    const withGroups =
+      options?.withGroups === true || options?.withGroups === 'true';
+    const withTokens =
+      options?.withTokens === true || options?.withTokens === 'true';
 
     // Pagination setup
     const limit = options?.limit ? options?.limit : 10;
@@ -99,32 +66,19 @@ export default class GetUsers
         orderBy: {
           ...orderBy,
         },
-        select: !Object.keys(includeQuery).length
-          ? options?.selectFields ?? DefaultUserFieldsToSelect
-          : undefined,
-        include: Object.keys(includeQuery).length
-          ? {
-              roles: params?.filter?.roles
-                ? {
-                    where: { role: { name: { in: params.filter.roles } } },
-                  }
-                : withRoles ?? false,
-              groups: params?.filter?.groups
-                ? {
-                    where: { group: { name: { in: params.filter.groups } } },
-                  }
-                : withGroups ?? false,
+        select:
+          !withRoles && !withGroups && !withTokens
+            ? options?.selectFields ?? DefaultUserFieldsToSelect
+            : undefined,
+        include:
+          !withRoles || !withGroups || !withTokens
+            ? {
+                roles: withRoles,
+                groups: withGroups,
 
-              tokens: withTokens
-                ? {
-                    where: {
-                      expireAt: { gte: new Date() },
-                      type: { not: TokenType.OTP },
-                    },
-                  }
-                : false,
-            }
-          : undefined,
+                tokens: withTokens,
+              }
+            : undefined,
         skip: skip,
         take: limit,
       });

@@ -10,6 +10,7 @@ import IMessageBroker from '../../providers/messageBroker';
 import { DefaultUserFieldsToSelect } from '../../../utils/constants/user';
 import IUserRepository from '../../repositories/userRepository';
 import logger from '../../../utils/logger';
+import { userUpdated } from '../../../utils/kafka-topics.json';
 
 export default class UpdateUserAccount
   implements
@@ -47,7 +48,7 @@ export default class UpdateUserAccount
       // Publish with message broker
       try {
         await messageBroker.publish({
-          topic: 'user.updated',
+          topic: userUpdated,
           messages: [
             {
               value: JSON.stringify({

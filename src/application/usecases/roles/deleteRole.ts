@@ -5,7 +5,7 @@ import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import IMessageBroker from '../../providers/messageBroker';
 import logger from '../../../utils/logger';
-import IRoleRepository from '../../repositories/RoleRepository';
+import IRoleRepository from '../../repositories/roleRepository';
 import moment from 'moment';
 import { RoleQuery } from '../../../domain/dtos/roles/findRoles';
 import setupRoleQuery from '../utils/setupRolesQuery';
@@ -39,12 +39,18 @@ export default class DeleteRole
       const query = setupRoleQuery(params);
 
       // Ensure user has permissions to delete
-      const count = await this.repository.count({ where: {
-        ...query,
-        slug: {
-          notIn: [slugify(StaticRoles.SuperAdmin), slugify(StaticRoles.Editor), slugify(StaticRoles.Viewer)],
-        }
-      } });
+      const count = await this.repository.count({
+        where: {
+          ...query,
+          slug: {
+            notIn: [
+              slugify(StaticRoles.SuperAdmin),
+              slugify(StaticRoles.Editor),
+              slugify(StaticRoles.Viewer),
+            ],
+          },
+        },
+      });
 
       if (count < 1) {
         return {

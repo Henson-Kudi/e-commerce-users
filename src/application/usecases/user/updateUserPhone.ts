@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { IUpdateUserPhoneDTO } from '../../../domain/dtos/user/IUpdateUser';
-import { UserEntity, UserTokenEntity } from '../../../domain/entities';
+import { UserEntity, TokenEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import UseCaseInterface from '../protocols';
 import ErrorClass from '../../../domain/valueObjects/customError';
@@ -10,6 +10,7 @@ import IMessageBroker from '../../providers/messageBroker';
 import { DefaultUserFieldsToSelect } from '../../../utils/constants/user';
 import IUserRepository from '../../repositories/userRepository';
 import IUserTokensRepository from '../../repositories/userTokensRepository';
+import { userUpdated } from '../../../utils/kafka-topics.json';
 
 export default class UpdateUserPhone
   implements
@@ -25,14 +26,9 @@ export default class UpdateUserPhone
     }
   ) {}
 
-  async execute(params: IUpdateUserPhoneDTO): Promise<
-    IReturnValue<
-      | (UserEntity & {
-          tokens?: UserTokenEntity[];
-        })
-      | null
-    >
-  > {
+  async execute(
+    params: IUpdateUserPhoneDTO
+  ): Promise<IReturnValue<UserEntity | null>> {
     const { messageBroker } = this.providers;
     const { tokensRepository, usersRepository } = this.repositories;
 
@@ -41,26 +37,24 @@ export default class UpdateUserPhone
       await validateChangePhoneNumber(params);
 
       // Ensure that user is active and not deleted
-      const foundUser = (
-        await usersRepository.find({
-          where: {
-            id: params.id,
-          },
-          include: {
-            tokens: {
-              // Only select tokens that are valid (not expired) and are otp token
-              where: {
-                expireAt: {
-                  gte: new Date(),
-                },
-                type: TokenType.OTP,
+      const foundUser = (await usersRepository.findUnique({
+        where: {
+          id: params.id,
+        },
+        include: {
+          tokens: {
+            // Only select tokens that are valid (not expired) and are otp token
+            where: {
+              expireAt: {
+                gte: new Date(),
               },
+              type: TokenType.OTP,
             },
           },
-        })
-      )[0];
+        },
+      })) as (UserEntity & { tokens?: TokenEntity[] }) | null;
 
-      if (!foundUser.isActive || foundUser.isDeleted) {
+      if (!foundUser || !foundUser.isActive || foundUser.isDeleted) {
         return {
           success: false,
           message: 'User not found',
@@ -110,7 +104,7 @@ export default class UpdateUserPhone
 
       // Publish with message broker
       await messageBroker.publish({
-        topic: 'user.updated',
+        topic: userUpdated,
         messages: [
           {
             value: JSON.stringify({

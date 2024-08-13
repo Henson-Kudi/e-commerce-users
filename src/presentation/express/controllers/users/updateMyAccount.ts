@@ -4,9 +4,9 @@ import RequestObject from '../../../../utils/types/request';
 import { UsersService } from '../../../../application/services/usersService';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 import ErrorClass from '../../../../domain/valueObjects/customError';
 import { Errors, ResponseCodes } from '../../../../domain/enums';
@@ -16,9 +16,9 @@ export default class UpdateMyAccount
     IContoller<
       IReturnValue<
         | (UserEntity & {
-            roles?: UserRoleEntity[];
-            groups?: UserGroupEntity[];
-            tokens?: UserTokenEntity[];
+            roles?: RoleEntity[];
+            groups?: GroupEntity[];
+            tokens?: TokenEntity[];
           })
         | null
       >
@@ -29,9 +29,9 @@ export default class UpdateMyAccount
   handle(request: RequestObject): Promise<
     IReturnValue<
       | (UserEntity & {
-          roles?: UserRoleEntity[];
-          groups?: UserGroupEntity[];
-          tokens?: UserTokenEntity[];
+          roles?: RoleEntity[];
+          groups?: GroupEntity[];
+          tokens?: TokenEntity[];
         })
       | null
     >

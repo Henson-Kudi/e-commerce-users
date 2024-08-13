@@ -81,32 +81,31 @@ export default class CreateRole
         },
       };
 
-      //   if users added, then create relationships alongside
-      if (Array.isArray(params.users) && params.users?.length) {
-        createData.data.users = {
-          create: params.users?.map((userId) => ({
-            user: { connect: { id: userId } },
-          })),
-        };
-      }
-
-      //   if groups added, then create relationships alongside
-      if (Array.isArray(params.groups) && params.groups?.length) {
-        createData.data.groups = {
-          create: params.groups?.map((id) => ({ group: { connect: { id } } })),
-        };
-      }
-
-      //   if permissions added, then create relationships alongside
-      if (Array.isArray(params.permissions) && params.permissions?.length) {
-        createData.data.permissions = {
-          create: params.permissions?.map((id) => ({
-            permission: { connect: { id } },
-          })),
-        };
-      }
-
-      const createdRole = await this.repository.create(createData);
+      const createdRole = await this.repository.create({
+        data: {
+          ...createData.data,
+          users: params.users?.length
+            ? {
+                connect: params.users.map((id) => ({ id })),
+              }
+            : undefined,
+          groups: params.groups?.length
+            ? {
+                connect: params.groups.map((id) => ({ id })),
+              }
+            : undefined,
+          permissions: params.permissions?.length
+            ? {
+                connect: params.permissions.map((id) => ({ id })),
+              }
+            : undefined,
+        },
+        include: {
+          permissions: !!params.permissions?.length,
+          users: !!params.users?.length,
+          groups: !!params.groups?.length,
+        },
+      });
 
       // Publish role created message (Using trycatch because we don't want to return an error when the role was actually created)
       try {

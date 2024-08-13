@@ -5,9 +5,9 @@ import {
 } from '../../../../domain/enums';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 import envConf from '../../../../utils/env.conf';
 import moment from 'moment';
@@ -30,9 +30,9 @@ export default async function attemptGoogleLogin(
 ): Promise<
   IReturnValue<
     | (UserEntity & {
-        tokens?: UserTokenEntity[];
-        groups?: UserGroupEntity[];
-        roles?: UserRoleEntity[];
+        tokens?: TokenEntity[];
+        groups?: GroupEntity[];
+        roles?: RoleEntity[];
       })
     | null
   >
@@ -134,14 +134,11 @@ export default async function attemptGoogleLogin(
   // At this level, user is valid google user.
   // We need to check if user already exist so we update data or crete a new user if user does not exist
 
-  let user = (
-    await repository.find({
-      where: {
-        email: payload.email?.trim()?.toLowerCase(),
-      },
-      take: 1,
-    })
-  )[0];
+  let user = await repository.findUnique({
+    where: {
+      email: payload.email?.trim()?.toLowerCase(),
+    },
+  });
 
   //   Id user does not already exist in db, create a new user
   if (!user) {
@@ -209,14 +206,8 @@ export default async function attemptGoogleLogin(
       photo: user?.photo ?? payload?.picture,
     },
     include: {
-      roles: {
-        include: {
-          role: true,
-        },
-      },
-      groups: {
-        include: { group: true },
-      },
+      roles: true,
+      groups: true,
       tokens: true,
     },
   });

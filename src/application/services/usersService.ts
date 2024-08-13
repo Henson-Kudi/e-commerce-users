@@ -1,4 +1,3 @@
-import { UserRoleQuery } from '../../domain/dtos/user-roles/findUserRole';
 import ICreateUserDTO from '../../domain/dtos/user/ICreateUser';
 import { QueryUserParams, UserQuery } from '../../domain/dtos/user/IFindUser';
 import IUpdateUserDTO, {
@@ -10,7 +9,6 @@ import messageBroker from '../../infrastructure/providers/messageBroker';
 import passwordManager from '../../infrastructure/providers/passwordManager';
 import tokenManager from '../../infrastructure/providers/tokenManager';
 import InvitationsRepository from '../../infrastructure/repositories/postgres/invitationsRepository';
-import UserRolesRepository from '../../infrastructure/repositories/postgres/userRoleRepository';
 import UsersRepository from '../../infrastructure/repositories/postgres/usersRepository';
 import UserTokensRepository from '../../infrastructure/repositories/postgres/userTokensRepository';
 import CreateInvitation from '../usecases/invitations/createInvitation';
@@ -32,7 +30,6 @@ import UpdateUserPhone from '../usecases/user/updateUserPhone';
 export class UsersService {
   private readonly usersRepository = new UsersRepository();
   private readonly userTokensRepository = new UserTokensRepository();
-  private readonly userRolesRepository = new UserRolesRepository();
   private readonly invitationsRepository = new InvitationsRepository();
 
   getUsers(params: QueryUserParams) {
@@ -64,7 +61,7 @@ export class UsersService {
         tokensRepository: this.userTokensRepository,
         usersRepository: this.usersRepository,
       },
-      { messageBroker }
+      { messageBroker, passwordManager }
     ).execute(params);
   }
 
@@ -124,21 +121,21 @@ export class UsersService {
   }
 
   addRolesToUser(params: { roles: string[]; actor: string; userId: string }) {
-    return new AddRolesToUser(this.userRolesRepository, {
+    return new AddRolesToUser(this.usersRepository, {
       messageBroker,
     }).execute(params);
   }
 
   removeRolesFromUser(params: {
-    filter: UserRoleQuery & {
-      users: string;
+    filter: UserQuery & {
+      id: string;
     };
     data: {
       roles: string[];
       actor: string;
     };
   }) {
-    return new RemoveRolesFromUser(this.userRolesRepository, {
+    return new RemoveRolesFromUser(this.usersRepository, {
       messageBroker,
     }).execute(params);
   }
@@ -152,6 +149,7 @@ export class UsersService {
   }) {
     return new CreateInvitation(
       this.invitationsRepository,
+      this.usersRepository,
       messageBroker,
       tokenManager
     ).execute(params);

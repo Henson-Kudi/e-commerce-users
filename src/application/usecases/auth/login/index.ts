@@ -1,9 +1,9 @@
 import humanInterval from 'human-interval';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 import UseCaseInterface from '../../protocols';
 import IReturnValue from '../../../../domain/valueObjects/returnValue';
@@ -29,9 +29,9 @@ export default class UserLogin
       { email?: string; password?: string },
       IReturnValue<
         | (UserEntity & {
-            tokens?: UserTokenEntity[];
-            groups?: UserGroupEntity[];
-            roles?: UserRoleEntity[];
+            tokens?: TokenEntity[];
+            groups?: GroupEntity[];
+            roles?: RoleEntity[];
           })
         | null
       >
@@ -59,9 +59,9 @@ export default class UserLogin
   ): Promise<
     IReturnValue<
       | (UserEntity & {
-          tokens?: UserTokenEntity[];
-          groups?: UserGroupEntity[];
-          roles?: UserRoleEntity[];
+          tokens?: TokenEntity[];
+          groups?: GroupEntity[];
+          roles?: RoleEntity[];
         })
       | null
     >
@@ -72,9 +72,9 @@ export default class UserLogin
     try {
       let loginResponse: IReturnValue<
         | (UserEntity & {
-            tokens?: UserTokenEntity[];
-            groups?: UserGroupEntity[];
-            roles?: UserRoleEntity[];
+            tokens?: TokenEntity[];
+            groups?: GroupEntity[];
+            roles?: RoleEntity[];
           })
         | null
       > | null = null;

@@ -58,7 +58,7 @@ export default function authenticateRequest(
 
       // Add user related data to request headers
       req.headers.userId = verifiedToken.data.id;
-      req.headers.userRoles = verifiedToken.data.roles?.map((t) => t.roleId);
+      req.headers.userRoles = verifiedToken.data.roles?.map((t) => t.id);
 
       next();
     } catch (error) {

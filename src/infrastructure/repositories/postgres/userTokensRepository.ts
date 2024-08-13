@@ -1,33 +1,33 @@
 import prisma from '../../database/postgres';
 import {
-  CreateUserTokenQuery,
-  FindUserTokenQuery,
-  UpdateUserTokenQuery,
-  UserTokenDeleteQuery,
-  UserTokensDbClient,
+  CreateTokenQuery,
+  FindTokenQuery,
+  UpdateTokenQuery,
+  DeleteTokenQuery,
+  TokensDbClient,
 } from '../protocols';
-import { UserTokenEntity } from '../../../domain/entities';
-import IUserTokensRepository from '../../../application/repositories/userTokensRepository';
+import { TokenEntity } from '../../../domain/entities';
+import ITokenTokensRepository from '../../../application/repositories/userTokensRepository';
 
-export default class UserTokensRepository implements IUserTokensRepository {
-  private readonly dbClient: UserTokensDbClient = prisma.userToken;
+export default class UserTokensRepository implements ITokenTokensRepository {
+  private readonly dbClient: TokensDbClient = prisma.token;
 
-  update(data: UpdateUserTokenQuery): Promise<UserTokenEntity> {
+  update(data: UpdateTokenQuery): Promise<TokenEntity> {
     const updated = this.dbClient.update(data);
     return updated;
   }
 
-  count(query: FindUserTokenQuery): Promise<number> {
+  count(query: FindTokenQuery): Promise<number> {
     return this.dbClient.count({ where: query.where });
   }
 
-  create(data: CreateUserTokenQuery): Promise<UserTokenEntity> {
+  create(data: CreateTokenQuery): Promise<TokenEntity> {
     const created = this.dbClient.create(data);
 
     return created;
   }
 
-  find(query: FindUserTokenQuery): Promise<UserTokenEntity[]> {
+  find(query: FindTokenQuery): Promise<TokenEntity[]> {
     const found = this.dbClient.findMany(query);
 
     return found;
@@ -38,8 +38,8 @@ export default class UserTokensRepository implements IUserTokensRepository {
     return res ? true : false;
   }
 
-  // Use this if you want to delete a user and all relational data of this user.
-  async deleteMany(params: UserTokenDeleteQuery): Promise<{
+  // Use this if you want to delete a Token and all relational data of this Token.
+  async deleteMany(params: DeleteTokenQuery): Promise<{
     matchedCount: number;
   }> {
     const deleted = await this.dbClient.deleteMany(params);

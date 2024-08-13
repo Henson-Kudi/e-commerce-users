@@ -1,11 +1,5 @@
 import { QueryGroupParams } from '../../../domain/dtos/groups/findGroups';
-import {
-  GroupEntity,
-  GroupRoleEntity,
-  RoleEntity,
-  UserEntity,
-  UserGroupEntity,
-} from '../../../domain/entities';
+import { GroupEntity, RoleEntity, UserEntity } from '../../../domain/entities';
 import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import { IReturnValueWithPagination } from '../../../domain/valueObjects/returnValue';
@@ -25,8 +19,8 @@ export default class GetGroups
   async execute(params: QueryGroupParams): Promise<
     IReturnValueWithPagination<
       | (GroupEntity & {
-          roles?: (GroupRoleEntity & { role?: RoleEntity })[];
-          users?: (UserGroupEntity & { user?: UserEntity })[];
+          roles?: RoleEntity[];
+          users?: UserEntity[];
         })[]
       | null
     >
@@ -55,8 +49,8 @@ export default class GetGroups
         },
 
         include: {
-          roles: withRoles ? { include: { role: true } } : false,
-          users: withUsers ? { include: { user: true } } : false,
+          roles: withRoles,
+          users: withUsers,
         },
 
         skip: skip,

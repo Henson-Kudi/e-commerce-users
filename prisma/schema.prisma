@@ -38,9 +38,9 @@ model User {
   lastModifiedById       String?
   invitedBy         User?       @relation("InvitedByUsers", fields: [invitedById], references: [id])
   invitedById       String?
-  roles             UserRole[]
-  groups            UserGroup[]
-  tokens            UserToken[]
+  roles             Role[]
+  groups            Group[]
+  tokens            Token[]
   invitations       Invitation[]
   lastLoginAt       DateTime?
   lastLoginIp       String?
@@ -65,12 +65,6 @@ model User {
   permisionsDeleted     Permission[] @relation("PermissionsDeleted")
   permisionsCreated     Permission[] @relation("PermissionsCreated")
   permisionsModified    Permission[] @relation("PermissionsUpdated")
-
-  userGroupsCreated    UserGroup[] @relation("UserGroupsCreated")
-
-  userRolesCreated  UserRole[]             @relation("UserRolesCreated")
-  groupRolesCreated  GroupRole[]             @relation("GroupRolesCreated")
-  rolePermissionsCreated  RolePermission[]             @relation("RolePermission")
 }
 
 model Group {
@@ -92,8 +86,8 @@ model Group {
   lastModifiedBy   User?       @relation("GroupsUpdated", fields: [lastModifiedById], references: [id], onDelete: SetNull)
   lastModifiedById String?
 
-  users       UserGroup[]
-  roles       GroupRole[]
+  users       User[]
+  roles       Role[]
 }
 
 model Role {
@@ -115,9 +109,9 @@ model Role {
   lastModifiedBy   User?       @relation("RolesUpdated", fields: [lastModifiedById], references: [id], onDelete: SetNull)
   lastModifiedById String?
 
-  users       UserRole[]
-  groups      GroupRole[]
-  permissions RolePermission[]
+  users       User[]
+  groups      Group[]
+  permissions Permission[]
 }
 
 model Permission {
@@ -139,76 +133,12 @@ model Permission {
   lastModifiedBy   User?       @relation("PermissionsUpdated", fields: [lastModifiedById], references: [id], onDelete: SetNull)
   lastModifiedById String?
 
-  roles      RolePermission[]
+  roles      Role[]
 
   @@unique([module, permission, resource])
 }
 
-model UserGroup {
-  id      String @id @default(uuid())
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId  String
-  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId String
-
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  createdBy  User?             @relation("UserGroupsCreated", fields: [createdById], references: [id], onDelete: SetNull)
-  createdById String?
-
-  @@unique([userId, groupId])
-}
-
-model UserRole {
-  id     String @id @default(uuid())
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId String
-
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  createdBy  User?             @relation("UserRolesCreated", fields: [createdById], references: [id])
-  createdById String
-
-  @@unique([userId, roleId])
-}
-
-model GroupRole {
-  id      String @id @default(uuid())
-  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId String
-  role    Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId  String
-
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  createdBy  User?             @relation("GroupRolesCreated", fields: [createdById], references: [id])
-  createdById String
-
-  @@unique([groupId, roleId])
-}
-
-model RolePermission {
-  id           String     @id @default(uuid())
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId       String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  permissionId String
-
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-
-  createdBy  User?             @relation("RolePermission", fields: [createdById], references: [id])
-  createdById String
-
-  @@unique([roleId, permissionId])
-}
-
-model UserToken {
+model Token {
   id       String    @id @default(uuid())
   type     TokenType
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)

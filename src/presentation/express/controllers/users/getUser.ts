@@ -4,9 +4,9 @@ import RequestObject from '../../../../utils/types/request';
 import { UsersService } from '../../../../application/services/usersService';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 
 export default class GetUser
@@ -14,9 +14,9 @@ export default class GetUser
     IContoller<
       IReturnValue<
         | (UserEntity & {
-            roles?: UserRoleEntity[];
-            groups?: UserGroupEntity[];
-            tokens?: UserTokenEntity[];
+            roles?: RoleEntity[];
+            groups?: GroupEntity[];
+            tokens?: TokenEntity[];
           })
         | null
       >
@@ -27,9 +27,9 @@ export default class GetUser
   handle(request: RequestObject): Promise<
     IReturnValue<
       | (UserEntity & {
-          roles?: UserRoleEntity[];
-          groups?: UserGroupEntity[];
-          tokens?: UserTokenEntity[];
+          roles?: RoleEntity[];
+          groups?: GroupEntity[];
+          tokens?: TokenEntity[];
         })
       | null
     >

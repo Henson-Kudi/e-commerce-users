@@ -1,8 +1,8 @@
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../../domain/entities';
 import { Errors, ResponseCodes } from '../../../../domain/enums';
 import ErrorClass from '../../../../domain/valueObjects/customError';
@@ -17,20 +17,18 @@ export default async function attemptNormalLogin(
 ): Promise<
   IReturnValue<
     | (UserEntity & {
-        tokens?: UserTokenEntity[];
-        groups?: UserGroupEntity[];
-        roles?: UserRoleEntity[];
+        tokens?: TokenEntity[];
+        groups?: GroupEntity[];
+        roles?: RoleEntity[];
       })
     | null
   >
 > {
-  const user = (
-    await repository.find({
-      where: {
-        email: data.email,
-      },
-    })
-  )[0];
+  const user = await repository.findUnique({
+    where: {
+      email: data.email.toLowerCase(),
+    },
+  });
 
   if (!user) {
     return {

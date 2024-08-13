@@ -1,3 +1,4 @@
+import { TokenEntity, UserEntity } from '../../../domain/entities';
 import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
@@ -56,7 +57,7 @@ export default class VerifyOtpCode
             },
           },
         })
-      )[0];
+      )[0] as UserEntity & { tokens?: TokenEntity[] };
 
       if (!foundUser) {
         return {

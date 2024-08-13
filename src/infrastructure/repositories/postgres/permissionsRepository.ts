@@ -8,7 +8,7 @@ import {
 } from '../protocols';
 import prisma from '../../database/postgres';
 import { PermissionEntity } from '../../../domain/entities';
-import IPermissionRepository from '../../../application/repositories/iPermissionRepository';
+import IPermissionRepository from '../../../application/repositories/permissionRepository';
 import { PermissionRegex } from '../../../utils/constants/permissions';
 import moment from 'moment';
 

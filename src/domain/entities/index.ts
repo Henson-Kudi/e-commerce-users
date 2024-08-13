@@ -1,25 +1,47 @@
 import {
   User,
   Group,
-  GroupRole,
   Permission,
   Role,
-  RolePermission,
-  UserGroup,
-  UserRole,
-  UserToken,
   Invitation,
+  Token,
+  Prisma,
 } from '@prisma/client';
+
+const roleWithPermissions = Prisma.validator<Prisma.RoleDefaultArgs>()({
+  include: {
+    permissions: true,
+  },
+});
+
+const groupWithRoles = Prisma.validator<Prisma.GroupDefaultArgs>()({
+  include: {
+    roles: roleWithPermissions,
+  },
+});
+
+// 1: Define a type that includes the relations
+export const userWithRelations = Prisma.validator<Prisma.UserDefaultArgs>()({
+  include: {
+    roles: roleWithPermissions,
+    groups: groupWithRoles,
+    tokens: true,
+  },
+});
+
+export type RoleWithPermissions = Prisma.RoleGetPayload<
+  typeof roleWithPermissions
+>;
+export type GroupWithRoles = Prisma.GroupGetPayload<typeof groupWithRoles>;
+
+// 3: This type will include a user and all their posts
+export type UserWithRelations = Prisma.UserGetPayload<typeof userWithRelations>;
 
 export {
   User as UserEntity,
   Group as GroupEntity,
-  GroupRole as GroupRoleEntity,
   Permission as PermissionEntity,
   Role as RoleEntity,
-  RolePermission as RolePermissionEntity,
-  UserGroup as UserGroupEntity,
-  UserRole as UserRoleEntity,
-  UserToken as UserTokenEntity,
   Invitation as InvitationEntity,
+  Token as TokenEntity,
 };

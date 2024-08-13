@@ -3,7 +3,7 @@ import { PermissionEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import { validateCreatePermissions } from '../../../utils/joi/schemas/permissionSchema';
 import IMessageBroker from '../../providers/messageBroker';
-import IPermissionRepository from '../../repositories/iPermissionRepository';
+import IPermissionRepository from '../../repositories/permissionRepository';
 import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
@@ -46,7 +46,13 @@ export default class CreatePermission
                 resource: data.resource.toUpperCase(),
               },
             },
-            update: {},
+            update: {
+              roles: data.roles?.length
+                ? {
+                    connect: data.roles.map((role) => ({ id: role })),
+                  }
+                : undefined,
+            },
             create: {
               permission: data.permission.toLowerCase(),
               module: data.module.toUpperCase(),

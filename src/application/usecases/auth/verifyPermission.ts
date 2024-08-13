@@ -1,14 +1,4 @@
 import {
-  GroupEntity,
-  GroupRoleEntity,
-  PermissionEntity,
-  RoleEntity,
-  RolePermissionEntity,
-  UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-} from '../../../domain/entities';
-import {
   Errors,
   ResourceAccessLevels,
   ResourceAccessType,
@@ -56,19 +46,17 @@ export default class VerifyPermission
       accessLevel?: ResourceAccessLevels;
     }>
   > {
+    const allowedRoles = (params.allowedRoles ?? [])
+      .concat([StaticRoles.SuperAdmin])
+      .map((role) => slugify(role));
     // Check if user is super admin and return if true
     const isAllowedRole = await this.repo.findUnique({
       where: {
         id: params.userId,
         roles: {
           some: {
-            role: {
-              slug: {
-                in:
-                  (params?.allowedRoles ?? [])
-                    .concat([StaticRoles.SuperAdmin])
-                    ?.map((role) => slugify(role)) ?? [],
-              },
+            slug: {
+              in: allowedRoles,
             },
           },
         },
@@ -84,122 +72,53 @@ export default class VerifyPermission
       };
     }
 
-    const userPermissions = (await this.repo.findUnique({
+    const userPermissions = await this.repo.findUserWithRolesAndGroups({
       where: {
         id: params.userId,
       },
       include: {
         groups: {
           include: {
-            group: {
+            roles: {
               include: {
-                roles: {
-                  include: {
-                    role: {
-                      include: {
-                        permissions: {
-                          include: {
-                            permission: true,
-                          },
-                          where: {
-                            permission: {
-                              module: params.module.toUpperCase(),
-                              isActive: true,
-                              isDeleted: false,
-                              resource: params.resource.toUpperCase(),
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
+                permissions: {
                   where: {
-                    role: {
-                      isActive: true,
-                      isDeleted: false,
-                    },
+                    module: params.module.toUpperCase(),
+                    isActive: true,
+                    isDeleted: false,
+                    resource: params.resource.toUpperCase(),
                   },
                 },
+              },
+              where: {
+                isActive: true,
+                isDeleted: false,
               },
             },
           },
           where: {
-            group: {
-              isActive: true,
-              isDeleted: false,
-            },
+            isActive: true,
+            isDeleted: false,
           },
         },
         roles: {
           include: {
-            role: {
-              include: {
-                permissions: {
-                  include: {
-                    permission: true,
-                  },
-                  where: {
-                    permission: {
-                      module: params.module.toUpperCase(),
-                      resource: params.resource.toUpperCase(),
-                      isDeleted: false,
-                      isActive: true,
-                    },
-                  },
-                },
+            permissions: {
+              where: {
+                module: params.module.toUpperCase(),
+                resource: params.resource.toUpperCase(),
+                isDeleted: false,
+                isActive: true,
               },
             },
           },
           where: {
-            role: {
-              isActive: true,
-              isDeleted: false,
-            },
+            isActive: true,
+            isDeleted: false,
           },
         },
       },
-    })) as UserEntity & {
-      groups?: (UserGroupEntity & {
-        group?: GroupEntity & {
-          roles?: (GroupRoleEntity & {
-            role?: RoleEntity & {
-              permissions?: (RolePermissionEntity & {
-                permission?: PermissionEntity;
-              })[];
-            };
-          })[];
-        };
-      })[];
-      roles?: (UserRoleEntity & {
-        role?: RoleEntity & {
-          permissions?: (RolePermissionEntity & {
-            permission?: PermissionEntity;
-          })[];
-        };
-      })[];
-    };
-
-    const groupPerms =
-      userPermissions.groups
-        ?.map((group) =>
-          group.group?.roles?.map((role) =>
-            role.role?.permissions?.map((perm) => perm?.permission?.permission)
-          )
-        )
-        ?.flat(5)
-        .filter((item) => item != undefined) ?? [];
-
-    const userPerms =
-      userPermissions.roles
-        ?.map((role) =>
-          role?.role?.permissions?.map((perm) => perm?.permission?.permission)
-        )
-        .flat(5)
-        ?.filter((item) => item != undefined) ?? [];
-
-    const allPermissions = groupPerms?.concat(userPerms);
-
-    const combinedPermissions = combineUserPermissions(allPermissions);
+    });
 
     const NotAuthorised = {
       success: false,
@@ -211,6 +130,30 @@ export default class VerifyPermission
       ),
       message: 'Unauthorized',
     };
+
+    if (!userPermissions) {
+      return NotAuthorised;
+    }
+
+    // const groups = userPermissions?.groups
+
+    const groupPerms =
+      userPermissions?.groups
+        ?.map((group) => group?.roles?.map((role) => role?.permissions))
+        ?.flat(5)
+        .filter((item) => item != undefined) ?? [];
+
+    const userPerms =
+      userPermissions?.roles
+        ?.map((role) => role?.permissions)
+        .flat(5)
+        ?.filter((item) => item != undefined) ?? [];
+
+    const allPermissions = groupPerms?.concat(userPerms);
+
+    const combinedPermissions = combineUserPermissions(
+      allPermissions.map((item) => item.permission)
+    );
 
     // if user does not have permission, return false (unauthorised)
     if (
@@ -242,17 +185,15 @@ export default class VerifyPermission
     };
 
     if (accessLevel === ResourceAccessLevels.Group) {
-      const userGroups =
-        userPermissions.groups?.map((group) => group.groupId) ?? [];
-      const userRoles = userPermissions.roles?.map((role) => role.roleId) ?? [];
+      const userGroups = userPermissions.groups?.map((group) => group.id) ?? [];
+      const userRoles = userPermissions.roles?.map((role) => role.id) ?? [];
 
       queryData.userGroups = userGroups;
       queryData.userRoles = userRoles;
     }
 
     if (accessLevel === ResourceAccessLevels.User) {
-      queryData.userRoles =
-        userPermissions.roles?.map((role) => role.roleId) ?? [];
+      queryData.userRoles = userPermissions.roles?.map((role) => role.id) ?? [];
     }
 
     return {

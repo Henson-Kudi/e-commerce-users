@@ -13,6 +13,7 @@ import { UserQuery } from '../../../domain/dtos/user/IFindUser';
 import setupUserQuery from '../utils/setupUserQuery';
 import logger from '../../../utils/logger';
 import moment from 'moment';
+import { userUpdated } from '../../../utils/kafka-topics.json';
 
 export default class UpdateUser
   implements
@@ -98,7 +99,7 @@ export default class UpdateUser
       // Publish with message broker
       try {
         await messageBroker.publish({
-          topic: 'user.updated',
+          topic: userUpdated,
           messages: [
             {
               value: JSON.stringify({

@@ -1,9 +1,9 @@
 import { UserQuery } from '../../../domain/dtos/user/IFindUser';
 import {
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  GroupEntity,
+  RoleEntity,
+  TokenEntity,
 } from '../../../domain/entities';
 import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
@@ -23,9 +23,9 @@ export default class GetUser
       },
       IReturnValue<
         | (UserEntity & {
-            tokens?: UserTokenEntity[];
-            groups?: UserGroupEntity[];
-            roles?: UserRoleEntity[];
+            tokens?: TokenEntity[];
+            groups?: GroupEntity[];
+            roles?: RoleEntity[];
           })
         | null
       >
@@ -43,9 +43,9 @@ export default class GetUser
   ): Promise<
     IReturnValue<
       | (UserEntity & {
-          tokens?: UserTokenEntity[];
-          groups?: UserGroupEntity[];
-          roles?: UserRoleEntity[];
+          tokens?: TokenEntity[];
+          groups?: GroupEntity[];
+          roles?: RoleEntity[];
         })
       | null
     >
@@ -56,16 +56,10 @@ export default class GetUser
       const found = await this.repository.find({
         where: query,
         include: {
-          groups:
-            params.withGroups && params?.withGroups === 'true'
-              ? { include: { group: true } }
-              : false,
-          roles:
-            params.withRoles && params?.withRoles === 'true'
-              ? { include: { role: true } }
-              : false,
+          groups: params.withGroups === true || params?.withGroups === 'true',
+          roles: params.withRoles === true || params?.withRoles === 'true',
           tokens:
-            params.withTokens && params?.withTokens === 'true'
+            params.withTokens === true || params?.withTokens === 'true'
               ? {
                   where: {
                     expireAt: {

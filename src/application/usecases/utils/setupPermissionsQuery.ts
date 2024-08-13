@@ -87,9 +87,14 @@ export default function setupPermissionsQuery(
     const roles = { in: query.roles?.map((item) => item?.trim()) };
     response.roles = {
       some: {
-        role: {
-          name: roles,
-        },
+        OR: [
+          {
+            name: roles,
+          },
+          {
+            id: roles,
+          },
+        ],
       },
     };
   }

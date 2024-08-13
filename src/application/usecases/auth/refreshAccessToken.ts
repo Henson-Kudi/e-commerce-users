@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { UserEntity, UserTokenEntity } from '../../../domain/entities';
+import { UserEntity, TokenEntity } from '../../../domain/entities';
 import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
@@ -13,7 +13,7 @@ export default class RefreshAccessToken
   implements
     UseCaseInterface<
       { userId: string; device: string; ip: string; token: string },
-      IReturnValue<UserEntity & { tokens: UserTokenEntity[] }>
+      IReturnValue<UserEntity & { tokens: TokenEntity[] }>
     >
 {
   constructor(
@@ -27,7 +27,7 @@ export default class RefreshAccessToken
     device: string;
     ip: string;
     token: string;
-  }): Promise<IReturnValue<UserEntity & { tokens: UserTokenEntity[] }>> {
+  }): Promise<IReturnValue<UserEntity & { tokens: TokenEntity[] }>> {
     const { jwtManager } = this.providers;
 
     if (!params.device || !params.ip || !params.token) {

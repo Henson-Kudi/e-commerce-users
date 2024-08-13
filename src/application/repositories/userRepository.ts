@@ -1,9 +1,10 @@
 import IRepository from '.';
 import {
+  GroupEntity,
+  PermissionEntity,
+  RoleEntity,
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  UserWithRelations,
 } from '../../domain/entities';
 import {
   CreateUserQuery,
@@ -15,11 +16,7 @@ import {
 
 export default interface IUserRepository
   extends IRepository<
-    UserEntity & {
-      roles?: UserRoleEntity[];
-      groups?: UserGroupEntity[];
-      tokens?: UserTokenEntity[];
-    },
+    UserEntity,
     CreateUserQuery,
     FindUsersQuery,
     UpdateUserQuery,
@@ -27,10 +24,14 @@ export default interface IUserRepository
   > {
   findUnique(query: FindOneUserQuery): Promise<
     | (UserEntity & {
-        roles?: UserRoleEntity[];
-        tokens?: UserTokenEntity[];
-        groups?: UserGroupEntity[];
+        groups?: (GroupEntity & {
+          roles?: (RoleEntity & { permissions?: PermissionEntity[] })[];
+        })[];
+        roles?: (RoleEntity & { permissions?: PermissionEntity[] })[];
       })
     | null
   >;
+  findUserWithRolesAndGroups(
+    query: FindOneUserQuery
+  ): Promise<UserWithRelations | null>;
 }

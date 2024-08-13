@@ -8,10 +8,12 @@ import {
 } from '../protocols';
 import prisma from '../../database/postgres';
 import {
+  GroupEntity,
+  PermissionEntity,
+  RoleEntity,
   UserEntity,
-  UserGroupEntity,
-  UserRoleEntity,
-  UserTokenEntity,
+  userWithRelations,
+  UserWithRelations,
 } from '../../../domain/entities';
 import IUserRepository from '../../../application/repositories/userRepository';
 
@@ -29,31 +31,31 @@ export default class UsersRepository implements IUserRepository {
     return created;
   }
 
-  find(query: FindUsersQuery): Promise<
-    (
-      | UserEntity
-      | (UserEntity & {
-          roles?: UserRoleEntity[];
-          tokens?: UserTokenEntity[];
-          groups?: UserGroupEntity[];
-        })
-    )[]
-  > {
+  find(query: FindUsersQuery): Promise<UserEntity[]> {
     const found = this.dbClient.findMany(query);
 
     return found;
   }
   findUnique(query: FindOneUserQuery): Promise<
     | (UserEntity & {
-        roles?: UserRoleEntity[];
-        tokens?: UserTokenEntity[];
-        groups?: UserGroupEntity[];
+        groups?: (GroupEntity & {
+          roles?: (RoleEntity & { permissions?: PermissionEntity[] })[];
+        })[];
+        roles?: (RoleEntity & { permissions?: PermissionEntity[] })[];
       })
     | null
   > {
     const found = this.dbClient.findUnique(query);
-
     return found;
+  }
+
+  findUserWithRolesAndGroups(
+    query: FindOneUserQuery
+  ): Promise<UserWithRelations | null> {
+    return this.dbClient.findUnique({
+      ...query,
+      include: query?.include ?? userWithRelations.include,
+    }) as Promise<UserWithRelations | null>;
   }
 
   count(query: FindUsersQuery): Promise<number> {

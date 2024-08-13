@@ -11,6 +11,7 @@ import IMessageBroker from '../../providers/messageBroker';
 import IUserRepository from '../../repositories/userRepository';
 import ITokenManager from '../../providers/jwtManager';
 import logger from '../../../utils/logger';
+import { userCreated } from '../../../utils/kafka-topics.json';
 
 export default class CreateUserUseCase
   implements UseCaseInterface<ICreateUserDTO, IReturnValue<UserEntity | null>>
@@ -71,18 +72,14 @@ export default class CreateUserUseCase
       const created = await this.repository.create({
         data: {
           ...data,
-          roles: data.roles
+          roles: data.roles?.length
             ? {
-                create: data?.roles?.map((id) => ({
-                  role: { connect: { id } },
-                })),
+                connect: data.roles.map((role) => ({ id: role })),
               }
             : undefined,
-          groups: data.groups
+          groups: data.groups?.length
             ? {
-                create: data?.groups?.map((id) => ({
-                  group: { connect: { id } },
-                })),
+                connect: data.groups.map((group) => ({ id: group })),
               }
             : undefined,
         },
@@ -90,7 +87,7 @@ export default class CreateUserUseCase
 
       // Publish with message broker
       await messageBroker.publish({
-        topic: 'user.created',
+        topic: userCreated,
         messages: [{ value: JSON.stringify(created) }],
       });
 

@@ -1,39 +1,40 @@
-import { UserRoleQuery } from '../../../domain/dtos/user-roles/findUserRole';
 import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IUserRoleRepository from '../../repositories/userRoleRepository';
+import IUserRepository from '../../repositories/userRepository';
 import UseCaseInterface from '../protocols';
-import setupUserRoleQuery from '../utils/setupUserRoleQuery';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
+import { UserQuery } from '../../../domain/dtos/user/IFindUser';
+import { RoleEntity, UserEntity } from '../../../domain/entities';
+import setupUserQuery from '../utils/setupUserQuery';
 
 export default class RemoveRolesFromUser
   implements
     UseCaseInterface<
       {
-        filter: UserRoleQuery & { users: string };
+        filter: UserQuery & { id: string };
         data: { roles: string[]; actor: string }; // list of roles to add
       },
-      IReturnValue<{ matchedCount: number }>
+      IReturnValue<UserEntity & { roles?: RoleEntity[] }>
     >
 {
   constructor(
-    private readonly repository: IUserRoleRepository,
+    private readonly repository: IUserRepository,
     private readonly providers: { messageBroker: IMessageBroker }
   ) {}
 
   async execute(params: {
-    filter: UserRoleQuery & { users: string };
+    filter: UserQuery & { id: string };
     data: { roles: string[]; actor: string }; // list of roles to add
-  }): Promise<IReturnValue<{ matchedCount: number }>> {
+  }): Promise<IReturnValue<UserEntity & { roles?: RoleEntity[] }>> {
     try {
       const { messageBroker } = this.providers;
       const { data, filter } = params;
 
       // Ensure user has permissions to perform task
-      const query = setupUserRoleQuery({
+      const query = setupUserQuery({
         ...filter,
         roles: data.roles, // list of roles to remove
       });
@@ -53,7 +54,17 @@ export default class RemoveRolesFromUser
         };
       }
 
-      const result = await this.repository.deleteMany({ where: query });
+      const result = await this.repository.update({
+        where: {
+          id: filter.id,
+        },
+        data: {
+          roles: {
+            disconnect: data.roles.map((role) => ({ id: role })),
+          },
+          lastModifiedById: data.actor,
+        },
+      });
 
       // Publish message
       try {
@@ -62,8 +73,9 @@ export default class RemoveRolesFromUser
           messages: [
             {
               value: JSON.stringify({
-                user: filter.users,
-                ...data,
+                user: filter.id,
+                removedRoles: data.roles,
+                removedBy: data.actor,
               }),
             },
           ],

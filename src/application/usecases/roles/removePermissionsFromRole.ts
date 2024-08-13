@@ -1,44 +1,44 @@
-import { RolePermissionQuery } from '../../../domain/dtos/role-permissions/findRolePermissions';
 import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IRolePermissionRepository from '../../repositories/iRolePermission';
+import IRoleRepository from '../../repositories/roleRepository';
 import UseCaseInterface from '../protocols';
-import setupRolePermissionsQuery from '../utils/setupRolePermissionsQuery';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
-
+import { RoleQuery } from '../../../domain/dtos/roles/findRoles';
+import { PermissionEntity, RoleEntity } from '../../../domain/entities';
+import setupRoleQuery from '../utils/setupRolesQuery';
 export default class RemovePermissionsFromRole
   implements
     UseCaseInterface<
       {
-        filter: RolePermissionQuery & {
-          roles: string;
+        filter: RoleQuery & {
+          id: string;
         };
         data: { permissions: string[]; actor: string }; // list of roles to add
       },
-      IReturnValue<{ matchedCount: number }>
+      IReturnValue<RoleEntity & { permissions?: PermissionEntity[] }>
     >
 {
   constructor(
-    private readonly repository: IRolePermissionRepository,
+    private readonly repository: IRoleRepository,
     private readonly providers: {
       messageBroker: IMessageBroker;
     }
   ) {}
 
   async execute(params: {
-    filter: RolePermissionQuery & {
-      roles: string;
+    filter: RoleQuery & {
+      id: string;
     };
     data: { permissions: string[]; actor: string }; // list of roles to add
-  }): Promise<IReturnValue<{ matchedCount: number }>> {
+  }): Promise<IReturnValue<RoleEntity & { permissions?: PermissionEntity[] }>> {
     try {
       const { messageBroker } = this.providers;
       const { data, filter } = params;
 
-      const query = setupRolePermissionsQuery({
+      const query = setupRoleQuery({
         ...filter,
         permissions: data.permissions,
       });
@@ -58,7 +58,17 @@ export default class RemovePermissionsFromRole
         };
       }
 
-      const result = await this.repository.deleteMany({ where: query });
+      const result = await this.repository.update({
+        where: {
+          id: filter.id,
+        },
+        data: {
+          permissions: {
+            disconnect: data.permissions.map((id) => ({ id })),
+          },
+          lastModifiedById: data.actor,
+        },
+      });
 
       // Publish message
       try {
@@ -66,7 +76,10 @@ export default class RemovePermissionsFromRole
           topic: kafkaTopics.permissionsRemovedFromRole,
           messages: [
             {
-              value: JSON.stringify({ role: filter.roles, ...data }),
+              value: JSON.stringify({
+                role: result.id,
+                removedPermissions: data.permissions,
+              }),
             },
           ],
         });

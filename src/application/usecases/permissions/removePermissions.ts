@@ -1,6 +1,6 @@
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import IPermissionRepository from '../../repositories/iPermissionRepository';
+import IPermissionRepository from '../../repositories/permissionRepository';
 import UseCaseInterface from '../protocols';
 import kafkaTopics from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
