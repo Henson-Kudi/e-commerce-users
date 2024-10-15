@@ -1,4 +1,5 @@
 import usersService from '../../../../application/services/usersService';
+import AcceptOrRejectInvitation from './acceptOrRejectInvitation';
 import AddRolesToUser from './addRolesToUser';
 import ChangeUserPassword from './changeUserPassword';
 import CreateUser from './createUserController';
@@ -39,6 +40,7 @@ class UsersController {
   inviteUser = new InviteUser(this.userService);
   getInvitations = new GetInvitations(this.userService);
   removeInvitation = new RemoveInvitation(this.userService);
+  acceptOrRejectInvitation = new AcceptOrRejectInvitation(this.userService);
 }
 
 export default new UsersController();

@@ -74,7 +74,7 @@ export default class CreatePermission
       try {
         await this.messageBroker.publish({
           topic: kafkaTopics.permissionCreated,
-          messages: [{ value: JSON.stringify(created) }],
+          message: JSON.stringify(created),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

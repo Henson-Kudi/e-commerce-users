@@ -46,10 +46,8 @@ export default class DeactivateAccount
       });
 
       // Publish message of user updated
-      await messageBroker.publish({
-        messages: [
-          { value: JSON.stringify({ data: user, fields: ['isDeleted'] }) },
-        ],
+      messageBroker.publish({
+        message: JSON.stringify({ data: user, fields: ['isDeleted'] }),
         topic: userUpdated,
       });
 
@@ -57,19 +55,15 @@ export default class DeactivateAccount
 
       // Publish message to send message and email to user
       if (user.email) {
-        await messageBroker.publish({
-          messages: [
-            { value: JSON.stringify({ to: user.email, message: message }) },
-          ],
+        messageBroker.publish({
+          message: JSON.stringify({ to: user.email, message: message }),
           topic: sendEmail,
         });
       }
 
       if (user.phone) {
-        await messageBroker.publish({
-          messages: [
-            { value: JSON.stringify({ to: user.phone, message: message }) },
-          ],
+        messageBroker.publish({
+          message: JSON.stringify({ to: user.phone, message: message }),
           topic: sendMessage,
         });
       }

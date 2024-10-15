@@ -70,7 +70,7 @@ export default class CreateGroup
       try {
         await this.messageBroker.publish({
           topic: kafkaTopics.groupCreated,
-          messages: [{ value: JSON.stringify(created) }],
+          message: JSON.stringify(created),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

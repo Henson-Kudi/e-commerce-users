@@ -56,7 +56,7 @@ groupRoutes
 
 // Group roles
 groupRoutes
-  .route('/group-roles/:id') // id refers to group id
+  .route('/:id/add-roles') // id refers to group id
   .post(
     verifyPermission(ResourceAccessType.Write, 'group-roles', [
       StaticRoles.Editor,
@@ -66,7 +66,7 @@ groupRoutes
 
 //  Group users
 groupRoutes
-  .route('/group-users/:id') // id refers to group id
+  .route('/:id/add-users') // id refers to group id
   .post(
     verifyPermission(ResourceAccessType.Write, 'group-users', [
       StaticRoles.Editor,

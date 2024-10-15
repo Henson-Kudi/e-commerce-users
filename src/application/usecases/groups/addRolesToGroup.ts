@@ -77,16 +77,12 @@ export default class AddRolesToGroup
 
       // Publish message of roles added
       try {
-        await messageBroker.publish({
-          messages: [
-            {
-              value: JSON.stringify({
-                group: data.groupId,
-                newRoles: data.roles,
-                addedBy: data.actor,
-              }),
-            },
-          ],
+        messageBroker.publish({
+          message: JSON.stringify({
+            group: data.groupId,
+            newRoles: data.roles,
+            addedBy: data.actor,
+          }),
           topic: kafkaTopics.rolesAddedToGroup,
         });
       } catch (err) {

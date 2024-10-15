@@ -11,6 +11,7 @@ import tokenManager from '../../infrastructure/providers/tokenManager';
 import InvitationsRepository from '../../infrastructure/repositories/postgres/invitationsRepository';
 import UsersRepository from '../../infrastructure/repositories/postgres/usersRepository';
 import UserTokensRepository from '../../infrastructure/repositories/postgres/userTokensRepository';
+import AcceptOrRejectInvitation from '../usecases/invitations/acceptOrRejectInvitation';
 import CreateInvitation from '../usecases/invitations/createInvitation';
 import GetInvitations from '../usecases/invitations/getInvitations';
 import RemoveInvitation from '../usecases/invitations/removeInvitation';
@@ -143,7 +144,7 @@ export class UsersService {
   // Invitations
   inviteUser(params: {
     invitor: string;
-    invitee: string;
+    invitee: string; // user email
     roles?: string[];
     expireAt?: Date;
   }) {
@@ -173,6 +174,18 @@ export class UsersService {
   }) {
     return new RemoveInvitation(
       this.invitationsRepository,
+      messageBroker
+    ).execute(params);
+  }
+
+  acceptOrRejectInvitation(params: {
+    invitationId: string;
+    actor: string;
+    accept: boolean;
+  }) {
+    return new AcceptOrRejectInvitation(
+      this.invitationsRepository,
+      this.usersRepository,
       messageBroker
     ).execute(params);
   }

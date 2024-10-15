@@ -70,15 +70,11 @@ export default class RemoveRolesFromUser
       try {
         await messageBroker.publish({
           topic: kafkaTopics.rolesRemovedFromUser,
-          messages: [
-            {
-              value: JSON.stringify({
-                user: filter.id,
-                removedRoles: data.roles,
-                removedBy: data.actor,
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            user: filter.id,
+            removedRoles: data.roles,
+            removedBy: data.actor,
+          }),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

@@ -131,14 +131,10 @@ export default class ChangeUserPassword
       // Publish with message broker
       await messageBroker.publish({
         topic: userUpdated,
-        messages: [
-          {
-            value: JSON.stringify({
-              data: updated,
-              fields: ['phone'],
-            }),
-          },
-        ],
+        message: JSON.stringify({
+          data: updated,
+          fields: ['phone'],
+        }),
       });
 
       return {

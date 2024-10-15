@@ -76,15 +76,11 @@ export default class AttachPermissionsToRole
     try {
       await this.messageBroker.publish({
         topic: kafkaTopics.permissionsAddedToRole,
-        messages: [
-          {
-            value: JSON.stringify({
-              role: data.roleId,
-              newPermissions: data.permissions,
-              addedBy: data.actor,
-            }),
-          },
-        ],
+        message: JSON.stringify({
+          role: data.roleId,
+          newPermissions: data.permissions,
+          addedBy: data.actor,
+        }),
       });
     } catch (err) {
       logger.error((err as Error).message, err);

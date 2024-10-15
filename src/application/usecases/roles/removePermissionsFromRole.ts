@@ -74,14 +74,10 @@ export default class RemovePermissionsFromRole
       try {
         await messageBroker.publish({
           topic: kafkaTopics.permissionsRemovedFromRole,
-          messages: [
-            {
-              value: JSON.stringify({
-                role: result.id,
-                removedPermissions: data.permissions,
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            role: result.id,
+            removedPermissions: data.permissions,
+          }),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

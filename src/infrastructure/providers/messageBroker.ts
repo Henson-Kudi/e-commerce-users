@@ -1,57 +1,134 @@
-import { Kafka, Consumer, Producer, Partitioners } from 'kafkajs';
 import IMessageBroker from '../../application/providers/messageBroker';
-import { kafkaConfig } from '../config/kafka.conf';
 import {
+  PublishMessageParams,
   MessageHandler,
   MessageSubscriptionParams,
-  PublishMessageParams,
 } from '../../utils/types/messageBroker';
+import Kafka from 'node-rdkafka';
+import logger from '../../utils/logger';
+import getKafkaConfig from '../../utils/getKafkaConfig';
+import moment from 'moment';
 
-class MessageBroker implements IMessageBroker {
-  private kafkaClient: Kafka;
-  private producer: Producer;
-  private consumer: Consumer;
+export class MessageBroker implements IMessageBroker {
+  private producer: Kafka.Producer;
+  private consumer: Kafka.KafkaConsumer;
 
   constructor() {
-    this.kafkaClient = new Kafka({ ...kafkaConfig });
-    this.producer = this.kafkaClient.producer({
-      createPartitioner: Partitioners.DefaultPartitioner,
-    });
-    this.consumer = this.kafkaClient.consumer({
-      groupId: 'identity-service',
-    });
+    const config = getKafkaConfig('kafkaclient.properties');
+
+    this.producer = new Kafka.Producer(config);
+
+    this.consumer = new Kafka.KafkaConsumer(
+      {
+        ...config,
+        'group.id': 'users-group',
+      },
+      {
+        'auto.offset.reset': 'earliest',
+      }
+    );
+
+    this.__init_consumer();
+    this.__init_producer();
   }
 
-  public async publish(params: PublishMessageParams): Promise<void> {
-    try {
-      // Connect producer
-      await this.producer.connect();
+  private __init_producer(): void {
+    this.producer.connect();
 
-      // Publish message to topic
-      await this.producer.send(params);
+    this.producer
+      .on('ready', (infos) => {
+        logger.info(`Producer connected to ${infos.name}`);
+      })
+      .on('event.error', (err) => {
+        logger.error('Producer connection error');
+        logger.error(err.message, err);
+      })
+      .on('connection.failure', (err) => {
+        logger.error('Failed to connect producer to kafka server');
+        logger.error(err.message, err);
+      })
+      .on('delivery-report', (err, report) => {
+        if (err) {
+          logger.error(err.message, err);
+          return;
+        }
+
+        logger.info(
+          `Message delivered to topic: ${report.topic}, partition: ${report.partition}, offset: ${report.offset}`
+        );
+      });
+  }
+
+  private __init_consumer(): void {
+    this.consumer.connect();
+    this.consumer
+      .on('ready', (infos) => {
+        logger.info(`Consumer connected to ${infos.name}`);
+      })
+      .on('event.error', (err) => {
+        logger.error('Consumer connection error');
+        logger.error(err.message, err);
+      })
+      .on('connection.failure', (err) => {
+        logger.error('Failed to connect consumer to kafka server');
+        logger.error(err.message, err);
+      });
+  }
+
+  public publish(params: PublishMessageParams): void {
+    try {
+      if (!this.producer.isConnected()) {
+        logger.warn('Producer not connected');
+        logger.info('Retrying connection');
+        this.__init_producer();
+      }
+      // Connect producer
+
+      this.producer.produce(
+        params.topic,
+        null,
+        Buffer.from(params.message),
+        params.key,
+        moment.now(),
+        undefined,
+        params?.headers
+      );
     } catch (err) {
       // handle retry logic.
       // log error to log system
-    } finally {
-      // Disconnect producer
-      await this.producer.disconnect();
+      logger.error((err as Error).message, err);
     }
   }
 
-  public async subscribe(
-    params: MessageSubscriptionParams,
+  public subscribe(
+    topics: MessageSubscriptionParams,
     callback: MessageHandler
-  ): Promise<void> {
+  ): void {
+    if (!topics.length) {
+      logger.warn('No topics provided for subscription');
+      return;
+    }
     try {
-      await this.consumer.connect();
-      await this.consumer.subscribe(params);
-      await this.consumer.run({
-        eachMessage: callback,
-      });
+      if (!this.consumer.isConnected) {
+        logger.warn('Consumer not connected');
+        logger.info('Retrying connection');
+        this.__init_consumer();
+      }
+
+      this.consumer.subscribe(topics);
+      logger.info(`Subscribed to topics ${topics}`);
+      this.consumer.consume();
+      this.consumer.on('data', callback);
     } catch (err) {
       // Handle retry logic
       // Log error to log sytem
+      logger.error((err as Error).message, err);
     }
+  }
+
+  public disconnect(): void {
+    this.producer.disconnect();
+    this.consumer.disconnect();
   }
 }
 

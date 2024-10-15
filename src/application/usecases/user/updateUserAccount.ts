@@ -47,16 +47,12 @@ export default class UpdateUserAccount
 
       // Publish with message broker
       try {
-        await messageBroker.publish({
+        messageBroker.publish({
           topic: userUpdated,
-          messages: [
-            {
-              value: JSON.stringify({
-                data: updated,
-                fields: Object.keys(data).filter((key) => key !== 'id'),
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            data: updated,
+            fields: Object.keys(data).filter((key) => key !== 'id'),
+          }),
         });
       } catch (err) {
         // Failed to publish user updated event

@@ -32,7 +32,7 @@ router
       StaticRoles.Viewer,
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('createdby'),
+    augmentRequestQuery('createdBy'),
     getPermissions
   )
   .post(
@@ -48,14 +48,14 @@ router
     verifyPermission(ResourceAccessType.Update, permissions, [
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     updatePermission
   )
   .delete(
     verifyPermission(ResourceAccessType.Delete, permissions, [
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     removePermissions
   )
   .get(
@@ -63,24 +63,27 @@ router
       StaticRoles.Viewer,
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('createdby'),
+    augmentRequestQuery('createdBy'),
     getPermission
   );
 
 // Role-Permissions
 router
-  .route('/role-permissions/:id') //id refers to role id
+  .route('/:id/add-permissions') //id refers to role id
   .post(
     verifyPermission(ResourceAccessType.Write, 'role-permissions', [
       StaticRoles.Editor,
     ]),
     attachPermissionsToRole
-  )
-  .put(
+  );
+
+router
+  .route('/:id/remove-permissions') //id refers to role i
+  .post(
     verifyPermission(ResourceAccessType.Delete, 'role-permissions', [
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     removePermissionsFromRole
   );
 
@@ -92,7 +95,7 @@ router
       StaticRoles.Viewer,
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     getRoles
   )
   .post(
@@ -104,12 +107,12 @@ router
   .route('/:id')
   .put(
     verifyPermission(ResourceAccessType.Update, roles, [StaticRoles.Editor]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     updateRole
   )
   .delete(
     verifyPermission(ResourceAccessType.Delete, roles, [StaticRoles.Editor]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     removeRole
   )
   .get(
@@ -117,7 +120,7 @@ router
       StaticRoles.Viewer,
       StaticRoles.Editor,
     ]),
-    augmentRequestQuery('filter.createdby'),
+    augmentRequestQuery('filter.createdBy'),
     getRole
   );
 

@@ -77,15 +77,11 @@ export default class AddMembersToGroup
       // Publish message of roles added
       try {
         await messageBroker.publish({
-          messages: [
-            {
-              value: JSON.stringify({
-                group: data.groupId,
-                newRoles: data.members,
-                addedBy: data.actor,
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            group: data.groupId,
+            newRoles: data.members,
+            addedBy: data.actor,
+          }),
           topic: kafkaTopics.usersAddedToGroup,
         });
       } catch (err) {

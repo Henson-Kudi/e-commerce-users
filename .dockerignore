@@ -1,0 +1,9 @@
+.gitignore
+.prettierrc
+.prettierignore
+eslint.config.mjs
+prisma/migrations
+.history
+.vscode
+dist
+logs

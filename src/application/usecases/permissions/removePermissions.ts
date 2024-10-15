@@ -67,18 +67,14 @@ export default class RemovePermissions
     try {
       await this.messageBroker.publish({
         topic: kafkaTopics.permissionsUpdated,
-        messages: [
-          {
-            value: JSON.stringify(
-              data.hardDelete
-                ? { data: data.ids }
-                : {
-                    data: data,
-                    fields: ['isDeleted', 'isActive'],
-                  }
-            ),
-          },
-        ],
+        message: JSON.stringify(
+          data.hardDelete
+            ? { data: data.ids }
+            : {
+                data: data,
+                fields: ['isDeleted', 'isActive'],
+              }
+        ),
       });
     } catch (err) {
       logger.error((err as Error).message, err);

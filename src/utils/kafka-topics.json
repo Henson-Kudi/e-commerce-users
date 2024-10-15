@@ -22,5 +22,7 @@
   "rolesRemovedFromUser": "roles-removed-from-user",
   "permissionsAddedToRole": "permissions-added-to-role",
   "permissionsRemovedFromRole": "permissions-removed-from-role",
-  "invitationDeleted": "invitation-deleted"
+  "invitationDeleted": "invitation-deleted",
+  "invitationAccepted": "invitation-accepted",
+  "invitationRejected": "invitation-rejected"
 }

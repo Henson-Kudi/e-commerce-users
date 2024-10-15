@@ -34,6 +34,12 @@ export default class CreateUser
       | null
     >
   > {
-    return this.userService.createUser(request.body);
+    // When a user is registering, we don't want them to have roles or groups.
+    // Groups can be gotten only by accepting an invitation or added manually by an authorised user
+    return this.userService.createUser({
+      ...request.body,
+      roles: undefined,
+      groups: undefined,
+    });
   }
 }

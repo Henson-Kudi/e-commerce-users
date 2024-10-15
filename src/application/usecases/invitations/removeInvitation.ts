@@ -55,13 +55,9 @@ export default class RemoveInvitation
 
       //   Inform message broker to send email to invitee
       try {
-        await this.messageBroker.publish({
+        this.messageBroker.publish({
           topic: kafkaTopics.invitationDeleted,
-          messages: [
-            {
-              value: params.id,
-            },
-          ],
+          message: JSON.stringify({ id: params.id }),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

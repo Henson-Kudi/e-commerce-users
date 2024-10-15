@@ -68,11 +68,7 @@ export default class RemoveGroups
         topic: options?.hardDelete
           ? kafkaTopics.groupsDeleted
           : kafkaTopics.groupsUpdated,
-        messages: [
-          {
-            value: JSON.stringify({ data: filter.id }),
-          },
-        ],
+        message: JSON.stringify({ data: filter.id }),
       });
     } catch (err) {
       logger.error((err as Error).message, err);

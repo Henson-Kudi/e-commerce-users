@@ -70,15 +70,11 @@ export default class AddRolesToUser
       try {
         await this.providers.messageBroker.publish({
           topic: kafkaTopics.rolesAddedToUser,
-          messages: [
-            {
-              value: JSON.stringify({
-                user: data.userId,
-                newRoles: data.roles,
-                addedBy: data.actor,
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            user: data.userId,
+            newRoles: data.roles,
+            addedBy: data.actor,
+          }),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

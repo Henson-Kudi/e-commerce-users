@@ -72,14 +72,10 @@ export default class RemoveMembersFromGroup
       // Publish to message broker
       await messageBroker.publish({
         topic: kafkaTopics.usersRemovedFromGroup,
-        messages: [
-          {
-            value: JSON.stringify({
-              group: filter.id,
-              ...data,
-            }),
-          },
-        ],
+        message: JSON.stringify({
+          group: filter.id,
+          ...data,
+        }),
       });
 
       return {

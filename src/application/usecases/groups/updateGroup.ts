@@ -118,14 +118,10 @@ export default class UpdateGroup
       try {
         await this.messageBroker.publish({
           topic: kafkaTopics.groupUpdated,
-          messages: [
-            {
-              value: JSON.stringify({
-                data: updated,
-                fields: Object.keys(updateData),
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            data: updated,
+            fields: Object.keys(updateData),
+          }),
         });
       } catch (err) {
         logger.error((err as Error)?.message, err);

@@ -15,9 +15,6 @@ export default {
     },
   },
   PORT: process.env.PORT || 4000,
-  KafkaClientId: process.env.KAFKA_CLIENT_ID || 'kafkajs',
-  KafkaBrokers: process.env.KAFKA_BROKERS?.split(',') || ['172.17.64.1:9092'],
-  KafkaUseSSL: process.env.KAFKA_USE_SSL || 'false',
   google: {
     oauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
     oauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || '',

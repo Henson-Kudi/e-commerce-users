@@ -140,16 +140,12 @@ export default class UpdateRole
 
       // Publish role updated message
       try {
-        await this.messageBroker.publish({
+        this.messageBroker.publish({
           topic: kafkaTopics.roleUpdated,
-          messages: [
-            {
-              value: JSON.stringify({
-                data: updated,
-                fields: Object.keys(updateData),
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            data: updated,
+            fields: Object.keys(updateData),
+          }),
         });
       } catch (err) {
         logger.error((err as Error)?.message, err);

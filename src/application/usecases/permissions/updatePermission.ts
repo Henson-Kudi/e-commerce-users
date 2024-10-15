@@ -99,14 +99,10 @@ export default class UpdatePermission
       try {
         await this.messageBroker.publish({
           topic: kafkaTopics.permissionUpdated,
-          messages: [
-            {
-              value: JSON.stringify({
-                data: updated,
-                fields: Object.keys(data).filter((item) => item !== 'id'),
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            data: updated,
+            fields: Object.keys(data).filter((item) => item !== 'id'),
+          }),
         });
       } catch (err) {
         logger.error((err as Error)?.message, err);

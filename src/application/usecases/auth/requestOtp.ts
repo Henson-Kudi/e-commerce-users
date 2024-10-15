@@ -88,15 +88,11 @@ export default class RequestOtpCode
       // if phone or userId was supplied, send otp to user phone number
       if ((params.phone || params.userId) && foundUser.phone) {
         // publish message to sms topic so sms service can send message to given user
-        await this.messageBroker.publish({
-          messages: [
-            {
-              value: JSON.stringify({
-                to: foundUser?.phone,
-                message: `Your OTP code is ${otpCode}`,
-              }),
-            },
-          ],
+        this.messageBroker.publish({
+          message: JSON.stringify({
+            to: foundUser?.phone,
+            message: `Your OTP code is ${otpCode}`,
+          }),
           topic: sendMessage,
         });
 
@@ -112,14 +108,10 @@ export default class RequestOtpCode
 
       // publish message to sms topic so sms service can send message to given user
       await this.messageBroker.publish({
-        messages: [
-          {
-            value: JSON.stringify({
-              to: foundUser?.email,
-              message: `Your OTP code is ${otpCode}`,
-            }), //value should be email options exposed by email microservice
-          },
-        ],
+        message: JSON.stringify({
+          to: foundUser?.email,
+          message: `Your OTP code is ${otpCode}`,
+        }), //value should be email options exposed by email microservice
         topic: sendEmail,
       });
 

@@ -20,6 +20,7 @@ import deleteMyAccount from './handlers/users/deleteMyAccount';
 import getInvitations from './handlers/users/getInvitations';
 import inviteUser from './handlers/users/inviteUser';
 import removeInvitation from './handlers/users/removeInvitations';
+import acceptOrRejectInvitation from './handlers/users/acceptOrRejectInvitation';
 
 const router = Router();
 
@@ -62,21 +63,13 @@ router
 
 router
   .route('/invitation/:id')
-  // .post(
-  //   verifyPermission(ResourceAccessType.Write, 'invitations', [
-  //     StaticRoles.Editor,
-  //   ]),
-  //   augmentRequestQuery('invitor'),
-  //   removeInvitation
-  // )
-  // .put(
-  //   verifyPermission(ResourceAccessType.Read, 'invitations', [
-  //     StaticRoles.Viewer,
-  //     StaticRoles.Editor,
-  //   ]),
-  //   augmentRequestQuery('invitor'),
-  //   getInvitations
-  // ) // We need to add methods to accept and reject invitations
+  .post(
+    verifyPermission(ResourceAccessType.Write, 'invitations', [
+      StaticRoles.Editor,
+    ]),
+    augmentRequestQuery('invitor'),
+    acceptOrRejectInvitation
+  )
   .delete(
     verifyPermission(ResourceAccessType.Delete, 'invitations', [
       StaticRoles.Editor,

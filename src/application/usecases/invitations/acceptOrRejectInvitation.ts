@@ -1,27 +1,22 @@
-import moment from 'moment';
 import { InvitationEntity } from '../../../domain/entities';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
-import validateCreateInvitation from '../../../utils/joi/schemas/invitation';
 import IInvitationsRepository from '../../repositories/invitationsRepository';
 import UseCaseInterface from '../protocols';
 import Joi from 'joi';
 import ErrorClass from '../../../domain/valueObjects/customError';
-import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
+import { Errors, InvitationStatus, ResponseCodes } from '../../../domain/enums';
 import IMessageBroker from '../../providers/messageBroker';
 import kafkaTopics from '../../../utils/kafka-topics.json';
-import envConf from '../../../utils/env.conf';
 import logger from '../../../utils/logger';
-import ITokenManager from '../../providers/jwtManager';
 import IUserRepository from '../../repositories/userRepository';
 
-export default class CreateInvitation
+export default class AcceptOrRejectInvitation
   implements
     UseCaseInterface<
       {
-        invitor: string;
-        invitee: string;
-        roles?: string[];
-        expireAt?: Date;
+        invitationId: string;
+        actor: string;
+        accept?: boolean;
       },
       IReturnValue<InvitationEntity>
     >
@@ -29,26 +24,24 @@ export default class CreateInvitation
   constructor(
     private readonly repository: IInvitationsRepository,
     private readonly usersRepo: IUserRepository,
-    private readonly messageBroker: IMessageBroker,
-    private readonly tokenManager: ITokenManager
+    private readonly messageBroker: IMessageBroker
   ) {}
 
   async execute(params: {
-    invitor: string;
-    invitee: string;
-    roles?: string[];
-    expireAt?: Date;
+    invitationId: string;
+    actor: string;
+    accept: boolean;
   }): Promise<IReturnValue<InvitationEntity>> {
     try {
-      await validateCreateInvitation(params);
+      const accept = params.accept !== false;
 
-      const invitor = await this.usersRepo.findUnique({
+      const invitation = await this.repository.findUnique({
         where: {
-          id: params.invitor,
+          id: params.invitationId,
         },
       });
 
-      if (!invitor) {
+      if (!invitation) {
         return {
           success: false,
           message: 'Invitor not found',
@@ -61,34 +54,69 @@ export default class CreateInvitation
         };
       }
 
-      const expiryDate = moment().add(2, 'weeks').toDate();
-
-      const created = await this.repository.createUpsert({
+      const foundUser = await this.usersRepo.findUnique({
         where: {
-          invitee: params.invitee,
-        },
-        update: {
-          expireAt: expiryDate,
-          invitorId: params.invitor,
-          invitee: params.invitee,
-          roles: params.roles,
-        },
-        create: {
-          invitorId: params.invitor,
-          invitee: params.invitee,
-          roles: params.roles,
-          expireAt: expiryDate,
+          email: invitation?.invitee,
         },
       });
+
+      if (!foundUser || !(foundUser.id === params.actor)) {
+        return {
+          success: false,
+          error: new ErrorClass(
+            'Invitation does not belong to you',
+            ResponseCodes.BadRequest,
+            null,
+            Errors.BadRequest
+          ),
+        };
+      }
+
+      // Update invitation status
+      const updated = await this.repository.update({
+        where: {
+          id: params.invitationId,
+        },
+        data: {
+          status: accept
+            ? InvitationStatus.ACCEPTED
+            : InvitationStatus.REJECTED,
+        },
+      });
+
+      // Update user details (if invitation is accepted)
+      if (accept) {
+        await this.usersRepo.update({
+          where: {
+            id: foundUser.id,
+          },
+          data: {
+            invitedById: invitation.invitorId,
+            roles: invitation.roles.length
+              ? {
+                  connect: invitation.roles.map((roleId) => ({
+                    id: roleId,
+                  })),
+                }
+              : undefined,
+            groups: invitation.groups.length
+              ? {
+                  connect: invitation.groups.map((groupId) => ({
+                    id: groupId,
+                  })),
+                }
+              : undefined,
+          },
+        });
+      }
 
       //   Inform message broker to send email to invitee. Note that user should be able to accept invitation only after successfully registering
       try {
         await this.messageBroker.publish({
-          topic: kafkaTopics.sendEmail,
-          message: JSON.stringify({
-            to: params.invitee,
-            message: `You have been invited to join ${envConf.AppName}. Click this link to accept or decline invitation: ${envConf.frontEndUrl}/invitations?token=${this.tokenManager.generateToken(TokenType.REFRESH_TOKEN, { invitorId: created.id })}`,
-          }),
+          topic: accept
+            ? kafkaTopics.invitationAccepted
+            : kafkaTopics.invitationRejected,
+          message: JSON.stringify(updated),
         });
       } catch (err) {
         logger.error((err as Error).message, err);
@@ -96,8 +124,8 @@ export default class CreateInvitation
 
       return {
         success: true,
-        data: created,
-        message: 'Invitation created successfully',
+        data: updated,
+        message: `Invitation ${accept ? 'accepted' : 'rejected'} successfully`,
       };
     } catch (err) {
       if (Joi.isError(err)) {

@@ -88,7 +88,7 @@ export default class CreateUserUseCase
       // Publish with message broker
       await messageBroker.publish({
         topic: userCreated,
-        messages: [{ value: JSON.stringify(created) }],
+        message: JSON.stringify(created),
       });
 
       // return Structured data

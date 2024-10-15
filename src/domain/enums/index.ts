@@ -1,4 +1,4 @@
-import { TokenType } from '@prisma/client';
+import { TokenType, InvitationStatus } from '@prisma/client';
 
 export enum ResponseCodes {
   BadRequest = 400,
@@ -61,4 +61,4 @@ export enum StaticRoles {
   Viewer = 'Viewer',
 }
 
-export { TokenType };
+export { TokenType, InvitationStatus };

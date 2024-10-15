@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan';
 import envConf from '../../utils/env.conf';
 import { Server } from 'http';
 import router from './routes';
@@ -20,9 +19,13 @@ app.use(
 
 app.use(express.json());
 
-app.use(morgan('dev'));
+// Add morgan for dev api route logging only
+if (envConf.NODE_ENV !== 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  app.use(require('morgan')('dev')); // morgan for api route logging
+}
 
-const baseUrl = '/api/v1';
+const baseUrl = '/api/v1/users-service';
 
 // This just test. make sure to modify
 app.use(`${baseUrl}`, router);

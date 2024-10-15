@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import IPasswordManager from '../../application/providers/passwordManager';
 import passwordRegex from '../../utils/constants/passwordRegex';
 

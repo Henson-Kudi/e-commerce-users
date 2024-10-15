@@ -103,16 +103,12 @@ export default class UpdateUserEmail
       await tokensRepository.delete(verifiedToken.id);
 
       // Publish with message broker
-      await messageBroker.publish({
+      messageBroker.publish({
         topic: userUpdated,
-        messages: [
-          {
-            value: JSON.stringify({
-              data: updated,
-              fields: ['email'],
-            }),
-          },
-        ],
+        message: JSON.stringify({
+          data: updated,
+          fields: ['email'],
+        }),
       });
 
       return {

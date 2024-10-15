@@ -103,16 +103,12 @@ export default class UpdateUserPhone
       await tokensRepository.delete(verifiedToken.id);
 
       // Publish with message broker
-      await messageBroker.publish({
+      messageBroker.publish({
         topic: userUpdated,
-        messages: [
-          {
-            value: JSON.stringify({
-              data: updated,
-              fields: ['phone'],
-            }),
-          },
-        ],
+        message: JSON.stringify({
+          data: updated,
+          fields: ['phone'],
+        }),
       });
 
       return {

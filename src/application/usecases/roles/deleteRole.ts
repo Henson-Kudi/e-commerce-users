@@ -87,13 +87,9 @@ export default class DeleteRole
       try {
         await this.messageBroker.publish({
           topic: kafkaTopics.roleDeleted,
-          messages: [
-            {
-              value: JSON.stringify({
-                data: { id: params.id },
-              }),
-            },
-          ],
+          message: JSON.stringify({
+            data: { id: params.id },
+          }),
         });
       } catch (err) {
         logger.error((err as Error)?.message, err);
