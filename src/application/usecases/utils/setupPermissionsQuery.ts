@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { PermissionQuery } from '../../../domain/dtos/permissions/findPermissions';
 import { PermissionsWhereFilter } from '../../../infrastructure/repositories/protocols';
+import logger from '../../../utils/logger';
 
 export default function setupPermissionsQuery(
   query?: PermissionQuery
@@ -101,7 +102,7 @@ export default function setupPermissionsQuery(
 
   if (query.search) {
     /* eslint-disable no-console */
-    console.log('search not implemented');
+    logger.warn('search not implemented');
   }
 
   return response;

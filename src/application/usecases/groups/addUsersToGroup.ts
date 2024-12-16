@@ -3,7 +3,7 @@ import { Errors, ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { groupUsersCreated } from '../../../utils/kafka-topics.json';
 import UseCaseInterface from '../protocols';
 import IGroupRepository from '../../repositories/groupsRepository';
 import logger from '../../../utils/logger';
@@ -82,7 +82,7 @@ export default class AddMembersToGroup
             newRoles: data.members,
             addedBy: data.actor,
           }),
-          topic: kafkaTopics.usersAddedToGroup,
+          topic: groupUsersCreated,
         });
       } catch (err) {
         logger.error((err as Error).message, err);

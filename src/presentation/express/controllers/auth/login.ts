@@ -8,6 +8,7 @@ import {
   RoleEntity,
   TokenEntity,
 } from '../../../../domain/entities';
+import { OTP_Types } from '../../../../domain/enums';
 
 export default class Login
   implements
@@ -17,9 +18,15 @@ export default class Login
             roles?: RoleEntity[];
             groups?: GroupEntity[];
             tokens?: TokenEntity[];
+            refreshToken?: string;
+            accessToken?: string;
           })
+        | { email?: string; userId?: string; phone?: string }
         | null
-      >
+      > & {
+        redirect?: boolean;
+        redirectType?: OTP_Types;
+      }
     >
 {
   constructor(private readonly authService: AuthService) {}
@@ -30,14 +37,31 @@ export default class Login
           roles?: RoleEntity[];
           groups?: GroupEntity[];
           tokens?: TokenEntity[];
+          accessToken: string;
+          refreshToken: string;
         })
+      | { email?: string; userId?: string; phone?: string }
       | null
-    >
+    > & {
+      redirect?: boolean;
+      redirectType?: OTP_Types;
+    }
   > {
+    const deviceIp = request.headers.deviceIp;
+    const userAgent = request.headers.userAgent;
+
+    // Parse User-Agent to extract details
+    const deviceType = request.headers.deviceType;
+    const os = request.headers.os;
+    const browser = request.headers.browser;
+
     const data = {
       ...request.body,
-      device: request.device!,
-      ip: request.ip!,
+      deviceIp,
+      deviceType,
+      os,
+      browser,
+      userAgent,
     };
 
     return this.authService.login(data);

@@ -36,7 +36,7 @@ export default async function expressAdapter<T = unknown>(
     xhr: httpRequest.xhr,
     res: httpRequest.res,
     device: httpRequest.headers['user-agent'],
-  };
+  } as unknown as RequestObject;
 
   if (!request.ip) {
     request.device = httpRequest.headers['user-agent'];

@@ -18,4 +18,5 @@ export default interface IRoleRepository
   > {
   softDelete(params: UpdateRoleQuery): Promise<RoleEntity>;
   findUnique(query: FindOneRoleQuery): Promise<RoleEntity | null>;
+  deleteRole(id: string): Promise<RoleEntity | null>;
 }

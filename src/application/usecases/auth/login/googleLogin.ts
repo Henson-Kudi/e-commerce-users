@@ -10,7 +10,6 @@ import {
   TokenEntity,
 } from '../../../../domain/entities';
 import envConf from '../../../../utils/env.conf';
-import moment from 'moment';
 import { GoogleAuthClient } from '../../../../utils/types/oauth';
 import IReturnValue from '../../../../domain/valueObjects/returnValue';
 import ErrorClass from '../../../../domain/valueObjects/customError';
@@ -20,10 +19,6 @@ export default async function attemptGoogleLogin(
   data: { [key: string]: unknown } & {
     type: SocialLoginTypes.Google;
     idToken: string;
-    lastLoginAt?: string;
-    lastLoginIp?: string;
-    lastLoginDevice?: string;
-    lastLoginLocation?: string;
   },
   repository: IUserRepository,
   oAuthCleint: GoogleAuthClient
@@ -146,13 +141,10 @@ export default async function attemptGoogleLogin(
     user = await repository.create({
       data: {
         email: payload.email,
+        emailVerified: true,
         name: payload.name ?? 'No name',
         photo: payload.picture as string | undefined,
         googleId: payload.sub,
-        lastLoginAt: moment().toDate(),
-        lastLoginIp: data.lastLoginIp as string | undefined,
-        lastLoginDevice: data.lastLoginDevice as string | undefined,
-        lastLoginLocation: data.lastLoginLocation as string | undefined,
         phone: '',
       },
     });
@@ -187,20 +179,12 @@ export default async function attemptGoogleLogin(
     };
   }
 
-  let updateData: { [key: string]: unknown } = {
-    lastLoginAt: moment().toDate(),
-    lastLoginIp: data.lastLoginIp,
-    lastLoginDevice: data.lastLoginDevice,
-    lastLoginLocation: data.lastLoginLocation,
-  };
-
   // Update user's email to verified since its from a social account plus login activity
   const updatedUser = await repository.update({
     where: {
       id: user.id,
     },
     data: {
-      ...updateData,
       emailVerified: true,
       googleId: payload.sub, //  update google id if it is an existing account
       photo: user?.photo ?? payload?.picture,

@@ -112,7 +112,7 @@ export default class AcceptOrRejectInvitation
 
       //   Inform message broker to send email to invitee. Note that user should be able to accept invitation only after successfully registering
       try {
-        await this.messageBroker.publish({
+        this.messageBroker.publish({
           topic: accept
             ? kafkaTopics.invitationAccepted
             : kafkaTopics.invitationRejected,

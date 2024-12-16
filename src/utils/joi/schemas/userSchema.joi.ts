@@ -17,6 +17,8 @@ const CreateUserSchema = Joi.object({
   appleId: Joi.string().optional(),
   photo: Joi.string().optional(),
   invitorToken: Joi.string().optional(),
+  roles: Joi.array().items(Joi.string()).optional(),
+  groups: Joi.array().items(Joi.string()).optional(),
 }).or('phone', 'email');
 
 const UpdateUserSchema = Joi.object({

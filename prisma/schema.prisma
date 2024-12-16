@@ -42,13 +42,14 @@ model User {
   groups            Group[]
   tokens            Token[]
   invitations       Invitation[]
-  lastLoginAt       DateTime?
-  lastLoginIp       String?
-  lastLoginDevice   String?
-  lastLoginLocation String?
+  // lastLoginAt       DateTime?
+  // lastLoginIp       String?
+  // lastLoginDevice   String?
+  // lastLoginLocation String?
   googleId          String?
   appleId           String?
   photo             String?
+  devices           UserDevice[]
 
   deletedUsers User[] @relation("DeletedByUsers")
   updatedUsers User[] @relation("UpdatedByUsers")
@@ -65,6 +66,8 @@ model User {
   permisionsDeleted  Permission[] @relation("PermissionsDeleted")
   permisionsCreated  Permission[] @relation("PermissionsCreated")
   permisionsModified Permission[] @relation("PermissionsUpdated")
+
+  @@index([email, phone, isActive, isDeleted])
 }
 
 model Group {
@@ -88,6 +91,8 @@ model Group {
 
   users User[]
   roles Role[]
+
+  @@index([slug, isActive, isDeleted])
 }
 
 model Role {
@@ -112,6 +117,8 @@ model Role {
   users       User[]
   groups      Group[]
   permissions Permission[]
+
+  @@index([slug, isActive, isDeleted])
 }
 
 model Permission {
@@ -136,6 +143,8 @@ model Permission {
   roles Role[]
 
   @@unique([module, permission, resource])
+
+  @@index([module, resource, permission, isActive, isDeleted])
 }
 
 model Token {
@@ -144,11 +153,13 @@ model Token {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId   String
   token    String
-  device   String?
-  ip       String?
+  device   UserDevice? @relation(references: [id], fields: [deviceId], onDelete: Cascade)
+  deviceId   String?
   expireAt DateTime
 
-  @@unique([type, userId])
+  @@unique([userId, token])
+
+  @@unique([type, userId, deviceId])
 }
 
 enum InvitationStatus {
@@ -166,4 +177,20 @@ model Invitation {
   roles     String[]
   groups    String[]
   expireAt  DateTime          @default(dbgenerated("now() + interval '2 weeks'"))
+}
+
+model UserDevice {
+  id  String @id() @default(uuid())
+  user User? @relation(references: [id], fields: [userId], onDelete: Cascade)
+  userId String
+  deviceIp String
+  userAgent String // user
+  deviceType String // mobile, laptop, desktop
+  browser String?
+  location String?
+  os String? //windows, linux, apple, android,
+  lastLoginAt DateTime @default(now())
+  tokens Token[]
+  @@unique([userId, deviceIp])
+  @@unique([userId, userAgent])
 }

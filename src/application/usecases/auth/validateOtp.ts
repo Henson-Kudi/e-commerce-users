@@ -4,21 +4,30 @@ import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IUserRepository from '../../repositories/userRepository';
 import UseCaseInterface from '../protocols';
-export default class VerifyOtpCode
+import ITokenManager from '../../providers/jwtManager';
+
+export default class ValidateOtpCode
   implements
     UseCaseInterface<
       { userId?: string; email?: string; phone?: string; code: string },
-      IReturnValue<{ valid: boolean }>
+      IReturnValue<{ valid: boolean; user?: UserEntity }>
     >
 {
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(
+    private readonly userRepository: IUserRepository,
+    private readonly providers: {
+      tokenManager: ITokenManager;
+    }
+  ) {}
 
   async execute(params: {
     userId?: string;
     email?: string;
     phone?: string;
     code: string;
-  }): Promise<IReturnValue<{ valid: boolean }>> {
+    loginDevice?: string;
+    loginIp?: string;
+  }): Promise<IReturnValue<{ valid: boolean; user?: UserEntity }>> {
     try {
       if (!params.email && !params.phone && !params.userId) {
         return {
@@ -33,31 +42,22 @@ export default class VerifyOtpCode
         };
       }
       // get user
-      const foundUser = (
-        await this.userRepository.find({
-          where: {
-            OR: [
-              { email: params.email },
-              { id: params.userId },
-              { phone: params.phone },
-            ],
-            tokens: {
-              some: {
-                type: TokenType.OTP,
-                token: params.code,
-              },
+      const query = params.userId
+        ? { id: params.userId }
+        : params.email
+          ? { email: params.email }
+          : { phone: params.phone };
+
+      const foundUser = (await this.userRepository.findUnique({
+        where: query,
+        include: {
+          tokens: {
+            where: {
+              type: TokenType.OTP,
             },
           },
-          take: 1,
-          include: {
-            tokens: {
-              where: {
-                type: TokenType.OTP,
-              },
-            },
-          },
-        })
-      )[0] as UserEntity & { tokens?: TokenEntity[] };
+        },
+      })) as UserEntity & { tokens?: TokenEntity[] };
 
       if (!foundUser) {
         return {
@@ -90,10 +90,13 @@ export default class VerifyOtpCode
         };
       }
 
+      delete foundUser.tokens;
+
       return {
         success: true,
         data: {
           valid: true,
+          user: foundUser,
         },
         message: 'OTP Verified',
       };

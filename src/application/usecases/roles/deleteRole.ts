@@ -11,6 +11,7 @@ import { RoleQuery } from '../../../domain/dtos/roles/findRoles';
 import setupRoleQuery from '../utils/setupRolesQuery';
 import { RolesWhereUniqueFilter } from '../../../infrastructure/repositories/protocols';
 import slugify from '../../../utils/slugifyString';
+import { RoleEntity } from '../../../domain/entities';
 
 export default class DeleteRole
   implements
@@ -65,12 +66,12 @@ export default class DeleteRole
         };
       }
 
-      let deleted: boolean = false;
+      let deleted: RoleEntity | null = null;
 
       if (params.hardDelete) {
-        deleted = await this.repository.delete(params.id);
+        deleted = await this.repository.deleteRole(params.id);
       } else {
-        const isDeleted = await this.repository.softDelete({
+        deleted = await this.repository.softDelete({
           where: query as RolesWhereUniqueFilter,
           data: {
             isActive: false,
@@ -79,16 +80,16 @@ export default class DeleteRole
             deletedById: params.actor,
           },
         });
-
-        deleted = isDeleted ? true : false;
       }
 
       // Publish role deleted message
       try {
-        await this.messageBroker.publish({
+        this.messageBroker.publish({
           topic: kafkaTopics.roleDeleted,
           message: JSON.stringify({
-            data: { id: params.id },
+            data: deleted,
+            actor: params.actor,
+            softDelete: !params.hardDelete,
           }),
         });
       } catch (err) {
@@ -96,8 +97,8 @@ export default class DeleteRole
       }
 
       return {
-        success: deleted,
-        data: deleted,
+        success: deleted ? true : false,
+        data: deleted ? true : false,
         message: 'Role deleted successfully',
       };
     } catch (error) {

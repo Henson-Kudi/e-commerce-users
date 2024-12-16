@@ -14,3 +14,5 @@ logs
 
 # Others
 kafkaclient.properties
+*.http
+Dockerfile-dev

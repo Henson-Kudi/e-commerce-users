@@ -4,7 +4,7 @@ import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import IGroupRepository from '../../repositories/groupsRepository';
 import UseCaseInterface from '../protocols';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { groupRolesDeleted } from '../../../utils/kafka-topics.json';
 import { GroupQuery } from '../../../domain/dtos/groups/findGroups';
 import { GroupEntity } from '../../../domain/entities';
 import setupGroupsQuery from '../utils/setupGroupsQuery';
@@ -69,7 +69,7 @@ export default class RemoveRolesFromGroup
 
       // Publish to message broker
       await messageBroker.publish({
-        topic: kafkaTopics.rolesRemovedFromGroup,
+        topic: groupRolesDeleted,
         message: JSON.stringify({
           group: filter.id,
           ...data,

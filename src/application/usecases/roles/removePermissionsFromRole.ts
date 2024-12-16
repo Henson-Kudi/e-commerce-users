@@ -4,7 +4,7 @@ import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import IRoleRepository from '../../repositories/roleRepository';
 import UseCaseInterface from '../protocols';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { rolePermissionsRemoved } from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
 import { RoleQuery } from '../../../domain/dtos/roles/findRoles';
 import { PermissionEntity, RoleEntity } from '../../../domain/entities';
@@ -73,10 +73,11 @@ export default class RemovePermissionsFromRole
       // Publish message
       try {
         await messageBroker.publish({
-          topic: kafkaTopics.permissionsRemovedFromRole,
+          topic: rolePermissionsRemoved,
           message: JSON.stringify({
             role: result.id,
             removedPermissions: data.permissions,
+            actor: data.actor,
           }),
         });
       } catch (err) {

@@ -61,4 +61,11 @@ export enum StaticRoles {
   Viewer = 'Viewer',
 }
 
+export enum OTP_Types {
+  Email_Verification = 'email_verification',
+  Phone_Verification = 'phone_verification',
+  _2FA_Verification = '2FA',
+  Password_Reset = 'password_reset',
+}
+
 export { TokenType, InvitationStatus };

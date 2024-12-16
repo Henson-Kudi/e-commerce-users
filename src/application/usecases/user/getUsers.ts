@@ -53,11 +53,23 @@ export default class GetUsers
       options?.withTokens === true || options?.withTokens === 'true';
 
     // Pagination setup
-    const limit = options?.limit ? options?.limit : 10;
-    const page = options?.page ? options?.page : 1;
+    const limit =
+      options?.limit &&
+      !isNaN(Number(options?.limit)) &&
+      Number(options?.limit) > 0 &&
+      Number(options?.limit) <= 100
+        ? Number(options?.limit)
+        : 10;
+    const page =
+      options?.page &&
+      !isNaN(Number(options?.page)) &&
+      Number(options?.page) > 0
+        ? Number(options?.page)
+        : 1;
     const skip = (page - 1) * limit;
 
     const total = await this.repository.count({ where: query });
+    const showSelectFields = !withRoles && !withGroups && !withTokens;
 
     try {
       const found = await this.repository.find({
@@ -66,19 +78,17 @@ export default class GetUsers
         orderBy: {
           ...orderBy,
         },
-        select:
-          !withRoles && !withGroups && !withTokens
-            ? options?.selectFields ?? DefaultUserFieldsToSelect
-            : undefined,
-        include:
-          !withRoles || !withGroups || !withTokens
-            ? {
-                roles: withRoles,
-                groups: withGroups,
+        select: showSelectFields
+          ? options?.selectFields ?? DefaultUserFieldsToSelect
+          : undefined,
+        include: !showSelectFields
+          ? {
+              roles: withRoles,
+              groups: withGroups,
 
-                tokens: withTokens,
-              }
-            : undefined,
+              tokens: withTokens,
+            }
+          : undefined,
         skip: skip,
         take: limit,
       });

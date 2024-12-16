@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { GroupsWhereFilter } from '../../../infrastructure/repositories/protocols';
 import { GroupQuery } from '../../../domain/dtos/groups/findGroups';
+import logger from '../../../utils/logger';
 
 export default function setupGroupsQuery(
   query?: GroupQuery
@@ -104,7 +105,7 @@ export default function setupGroupsQuery(
 
   if (query.search) {
     /* eslint-disable no-console */
-    console.log('search not implemented');
+    logger.warn('search not implemented');
   }
 
   return response;

@@ -21,6 +21,7 @@ import getInvitations from './handlers/users/getInvitations';
 import inviteUser from './handlers/users/inviteUser';
 import removeInvitation from './handlers/users/removeInvitations';
 import acceptOrRejectInvitation from './handlers/users/acceptOrRejectInvitation';
+import countUsers from './handlers/users/countUsers';
 
 const router = Router();
 
@@ -41,6 +42,15 @@ router.get(
   ]),
   augmentRequestQuery('filter.invitedById'),
   getUsers
+);
+
+router.get(
+  '/count',
+  verifyPermission(ResourceAccessType.Read, resource, [
+    StaticRoles.Viewer,
+    StaticRoles.Editor,
+  ]),
+  countUsers
 );
 
 //  User Invitations
@@ -78,16 +88,16 @@ router
     removeInvitation
   );
 
-// Routes for a user to perform actions for his/her account
+// Routes for a user to perform actions for his/her me
 router
-  .route('/account')
+  .route('/me')
   .put(updateMyAccount)
   .delete(deactivateMyAccount)
   .get(getMyDetails);
-router.route('/account/phone').put(updateUserPhone);
-router.route('/account/email').put(updateUserEmail);
-router.route('/account/credentials').put(changeUserPassword);
-router.route('/account/delete').delete(deleteMyAccount);
+router.route('/me/phone').put(updateUserPhone);
+router.route('/me/email').put(updateUserEmail);
+router.route('/me/credentials').put(changeUserPassword);
+router.route('/me/delete').delete(deleteMyAccount);
 
 // User roles
 router.post(

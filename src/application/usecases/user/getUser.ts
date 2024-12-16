@@ -39,6 +39,7 @@ export default class GetUser
       withRoles?: boolean | 'true' | 'false';
       withGroups?: boolean | 'true' | 'false';
       withTokens?: boolean | 'true' | 'false';
+      withDevices?: boolean | 'true' | 'false';
     }
   ): Promise<
     IReturnValue<
@@ -58,6 +59,8 @@ export default class GetUser
         include: {
           groups: params.withGroups === true || params?.withGroups === 'true',
           roles: params.withRoles === true || params?.withRoles === 'true',
+          devices:
+            params.withDevices === true || params?.withDevices === 'true',
           tokens:
             params.withTokens === true || params?.withTokens === 'true'
               ? {

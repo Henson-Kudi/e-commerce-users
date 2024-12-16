@@ -13,6 +13,13 @@ export default class VerifyPhone
       token: request.body.code,
       id: request.body.userId,
       phone: request.body.phone,
+      isLoggedIn: request.headers.authorization?.toString() ? true : false,
+      deviceIp: request.headers.deviceIp?.toString(),
+      userAgent: request.headers.userAgent?.toString(),
+      deviceType: request.headers.deviceType?.toString(),
+      os: request.headers.os?.toString(),
+      browser: request.headers.browser?.toString(),
+      location: request.headers.location?.toString(),
     });
   }
 }

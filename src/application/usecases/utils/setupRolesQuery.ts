@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { RolesWhereFilter } from '../../../infrastructure/repositories/protocols';
 import { RoleQuery } from '../../../domain/dtos/roles/findRoles';
+import logger from '../../../utils/logger';
 
 export default function setupRoleQuery(query?: RoleQuery): RolesWhereFilter {
   const response: RolesWhereFilter = {};
@@ -123,7 +124,7 @@ export default function setupRoleQuery(query?: RoleQuery): RolesWhereFilter {
 
   if (query.search) {
     /* eslint-disable no-console */
-    console.log('search not implemented');
+    logger.warn('search not implemented');
   }
 
   return response;

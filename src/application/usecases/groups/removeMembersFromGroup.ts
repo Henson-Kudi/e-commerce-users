@@ -3,7 +3,7 @@ import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import UseCaseInterface from '../protocols';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { groupUsersDeleted } from '../../../utils/kafka-topics.json';
 import IGroupRepository from '../../repositories/groupsRepository';
 import setupGroupsQuery from '../utils/setupGroupsQuery';
 import { GroupQuery } from '../../../domain/dtos/groups/findGroups';
@@ -71,7 +71,7 @@ export default class RemoveMembersFromGroup
 
       // Publish to message broker
       await messageBroker.publish({
-        topic: kafkaTopics.usersRemovedFromGroup,
+        topic: groupUsersDeleted,
         message: JSON.stringify({
           group: filter.id,
           ...data,

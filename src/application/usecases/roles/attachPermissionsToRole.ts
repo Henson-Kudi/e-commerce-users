@@ -3,7 +3,7 @@ import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import IRoleRepository from '../../repositories/roleRepository';
 import UseCaseInterface from '../protocols';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { rolePermissionsCreated } from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import { Errors, ResponseCodes } from '../../../domain/enums';
@@ -75,7 +75,7 @@ export default class AttachPermissionsToRole
     // Publish to broker
     try {
       await this.messageBroker.publish({
-        topic: kafkaTopics.permissionsAddedToRole,
+        topic: rolePermissionsCreated,
         message: JSON.stringify({
           role: data.roleId,
           newPermissions: data.permissions,

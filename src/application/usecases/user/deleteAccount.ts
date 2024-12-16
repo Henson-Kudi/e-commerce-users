@@ -1,11 +1,7 @@
 import { ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
-import {
-  sendEmail,
-  sendMessage,
-  userUpdated,
-} from '../../../utils/kafka-topics.json';
+import { userDeleted } from '../../../utils/kafka-topics.json';
 import IMessageBroker from '../../providers/messageBroker';
 import UseCaseInterface from '../protocols';
 import IUserRepository from '../../repositories/userRepository';
@@ -37,27 +33,13 @@ export default class DeleteAccount
       });
 
       // Publish message of user updated
-      await messageBroker.publish({
-        message: JSON.stringify({ data: user, fields: ['isDeleted'] }),
-        topic: userUpdated,
+      messageBroker.publish({
+        message: JSON.stringify({ data: user, actor: user.id }),
+        topic: userDeleted,
       });
 
       const message = `Account deleted successfully. You can still recover this account before [date]. Please contact support if you did not initiate this.`;
 
-      // Publish message to send message and email to user
-      if (user.email) {
-        messageBroker.publish({
-          message: JSON.stringify({ to: user.email, message: message }),
-          topic: sendEmail,
-        });
-      }
-
-      if (user.phone) {
-        messageBroker.publish({
-          message: JSON.stringify({ to: user.phone, message: message }),
-          topic: sendMessage,
-        });
-      }
       // We also want to set cron job to delete user's account completely (or at least his roles, groups) after given duration (if user did not recover the account)
 
       return {

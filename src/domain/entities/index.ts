@@ -6,6 +6,7 @@ import {
   Invitation,
   Token,
   Prisma,
+  UserDevice,
 } from '@prisma/client';
 
 const roleWithPermissions = Prisma.validator<Prisma.RoleDefaultArgs>()({
@@ -44,4 +45,5 @@ export {
   Role as RoleEntity,
   Invitation as InvitationEntity,
   Token as TokenEntity,
+  UserDevice as UserDeviceEntity,
 };

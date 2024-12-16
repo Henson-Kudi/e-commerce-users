@@ -11,12 +11,18 @@ export default {
     },
     RefreshToken: {
       secret: process.env.JWT_REFRESH_SECRET || 'refreshTokenSecret',
-      expiration: { value: 1, unit: 'day' },
+      expiration: { value: 15, unit: 'days' },
     },
   },
   PORT: process.env.PORT || 4000,
   google: {
     oauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
     oauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || '',
+  },
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    s3Region: process.env.AWS_S3REGION || '',
+    s3BucketName: process.env.AWS_S3_BUCKET_NAME || '',
   },
 };

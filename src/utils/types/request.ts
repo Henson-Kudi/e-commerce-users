@@ -1,7 +1,8 @@
+import { Request } from 'express';
 import { ResourceAccessLevels } from '../../domain/enums';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-type RequestObject = {
+type RequestObject = Request & {
   body?: any;
   query?: any;
   params?: any;
@@ -13,6 +14,11 @@ type RequestObject = {
     roles?: string[];
     groups?: string[];
     accessLevel?: ResourceAccessLevels;
+    deviceIp?: string;
+    userAgent?: string;
+    deviceType?: string;
+    os?: string;
+    browser?: string;
   };
   cookies?: any;
   app?: any;

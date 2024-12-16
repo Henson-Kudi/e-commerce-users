@@ -130,8 +130,20 @@ export default function setupUserQuery(query?: UserQuery): UsersWhereFilter {
   }
 
   if (query.search) {
-    /* eslint-disable no-console */
-    console.log('search not implemented');
+    response.OR = [
+      {
+        name: {
+          contains: query.search,
+          mode: 'insensitive',
+        },
+      },
+      {
+        email: {
+          contains: query.search,
+          mode: 'insensitive',
+        },
+      },
+    ];
   }
 
   return response;

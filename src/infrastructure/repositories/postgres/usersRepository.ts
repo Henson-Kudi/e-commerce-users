@@ -45,8 +45,7 @@ export default class UsersRepository implements IUserRepository {
       })
     | null
   > {
-    const found = this.dbClient.findUnique(query);
-    return found;
+    return this.dbClient.findUnique(query);
   }
 
   findUserWithRolesAndGroups(

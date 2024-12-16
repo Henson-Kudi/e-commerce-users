@@ -17,28 +17,24 @@ export default class UserLogout
     private readonly tokenManager: ITokenManager
   ) {}
 
-  async execute(params: {
-    token: string;
-    ip: string;
-    device: string;
-  }): Promise<IReturnValue<boolean>> {
+  async execute(params: { token: string }): Promise<IReturnValue<boolean>> {
     try {
-      // Decode token and delete all tokens of that user and device or ip
+      //just delete the token from db that belongs to user
       const decodedToken = await this.tokenManager.verifyJwtToken<{
         userId?: string;
       }>(TokenType.REFRESH_TOKEN, params.token);
 
-      // just delete all user tokens, no need to check if user exists or not
       if (decodedToken.userId) {
         await this.userTokensRepo.deleteMany({
           where: {
-            OR: [
-              { ip: params.ip },
-              { ip: null },
-              { device: params.device },
-              { device: null },
-            ],
             userId: decodedToken.userId,
+            token: params.token,
+          },
+        });
+      } else {
+        await this.userTokensRepo.deleteMany({
+          where: {
+            token: params.token,
           },
         });
       }
@@ -46,7 +42,7 @@ export default class UserLogout
       return {
         success: true,
         data: true,
-        message: 'Loggedout from device successfully',
+        message: 'Logged out from device successfully',
       };
     } catch (err) {
       const error = err as Error;

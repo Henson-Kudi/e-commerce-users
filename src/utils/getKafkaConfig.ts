@@ -7,8 +7,14 @@ export default function getKafkaConfig(
 
   return data.reduce<Record<string, string>>((config, line) => {
     const [key, value] = line.split('=');
-    if (key && value) {
-      config[key] = value.replace('\r', '');
+    if (
+      key &&
+      value &&
+      key?.trim() &&
+      value?.trim() &&
+      !key.trim().startsWith('#')
+    ) {
+      config[key?.trim()] = value.trim().replace('\r', '');
     }
     return config;
   }, {});

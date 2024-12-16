@@ -11,7 +11,7 @@ import { DefaultUserFieldsToSelect } from '../../../utils/constants/user';
 import IUserRepository from '../../repositories/userRepository';
 import IUserTokensRepository from '../../repositories/userTokensRepository';
 import IPasswordManager from '../../providers/passwordManager';
-import { userUpdated } from '../../../utils/kafka-topics.json';
+import { userPasswordChanged } from '../../../utils/kafka-topics.json';
 
 export default class ChangeUserPassword
   implements
@@ -129,12 +129,9 @@ export default class ChangeUserPassword
       await tokensRepository.delete(verifiedToken.id);
 
       // Publish with message broker
-      await messageBroker.publish({
-        topic: userUpdated,
-        message: JSON.stringify({
-          data: updated,
-          fields: ['phone'],
-        }),
+      messageBroker.publish({
+        topic: userPasswordChanged,
+        message: JSON.stringify(updated),
       });
 
       return {

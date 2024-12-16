@@ -38,7 +38,9 @@ export default class RefreshAccessToken
     >
   > {
     const cookies = request.cookies;
-    const refreshToken = cookies[RefreshTokenName];
+    // We're saying refresh token can come from request body or cookies header
+    let refreshToken =
+      cookies?.[RefreshTokenName] || request?.body?.refreshToken;
 
     if (!refreshToken) {
       return new Promise((res) => {
@@ -56,29 +58,25 @@ export default class RefreshAccessToken
     }
 
     const data = {
-      device: request.device,
-      ip: request.ip,
       token: refreshToken,
     };
 
-    if (!data.token || !data.ip || !data.device) {
-      return new Promise((res) => {
-        res({
-          success: false,
-          error: new ErrorClass(
-            Errors.UnAuthorised,
-            ResponseCodes.UnAuthorised,
-            null,
-            Errors.UnAuthorised
-          ),
-          message: Errors.UnAuthorised,
-        });
-      });
-    }
+    // if (!data.token || !data.ip || !data.device) {
+    //   return new Promise((res) => {
+    //     res({
+    //       success: false,
+    //       error: new ErrorClass(
+    //         Errors.UnAuthorised,
+    //         ResponseCodes.UnAuthorised,
+    //         null,
+    //         Errors.UnAuthorised
+    //       ),
+    //       message: Errors.UnAuthorised,
+    //     });
+    //   });
+    // }
 
     return this.authService.refreshAccessToken({
-      device: data.device,
-      ip: data.ip,
       token: data.token,
     });
   }

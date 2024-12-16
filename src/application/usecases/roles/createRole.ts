@@ -109,7 +109,7 @@ export default class CreateRole
 
       // Publish role created message (Using trycatch because we don't want to return an error when the role was actually created)
       try {
-        await messageBroker.publish({
+        messageBroker.publish({
           message: JSON.stringify(createdRole),
           topic: kafkaTopics.roleCreated,
         });

@@ -2,6 +2,7 @@ import usersService from '../../../../application/services/usersService';
 import AcceptOrRejectInvitation from './acceptOrRejectInvitation';
 import AddRolesToUser from './addRolesToUser';
 import ChangeUserPassword from './changeUserPassword';
+import CountUsers from './countUsers';
 import CreateUser from './createUserController';
 import DeactivateAccount from './deactivateAccount';
 import DeactivateMyAccount from './deactivateMyAccount';
@@ -22,6 +23,7 @@ class UsersController {
   private readonly userService = usersService;
 
   getUsers = new GetUsers(this.userService);
+  countUsers = new CountUsers(this.userService);
   getUser = new GetUser(this.userService);
   createUser = new CreateUser(this.userService);
   changeUserPassword = new ChangeUserPassword(this.userService);

@@ -4,6 +4,7 @@ import authRoutes from './authRoutes';
 import rolesAndPermissionsRoutes from './rolesAndPermissionsRoutes';
 import envConf from '../../../utils/env.conf';
 import groupRoutes from './groupRoutes';
+import uploadRoutes from './upload.route';
 
 const router = Router();
 
@@ -18,6 +19,8 @@ router.use('/roles', rolesAndPermissionsRoutes);
 
 // GROUP ROUTES
 router.use('/groups', groupRoutes);
+
+router.use('/files', uploadRoutes);
 
 export default router;
 

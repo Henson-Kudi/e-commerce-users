@@ -67,7 +67,7 @@ export default class AuthenticateJwt
       // Get user
       const user = await this.repository.findUnique({
         where: {
-          id: decodedToken.userId,
+          id: decodedToken.userId ?? decodedToken?.id,
           isActive: true,
           isDeleted: false,
         },

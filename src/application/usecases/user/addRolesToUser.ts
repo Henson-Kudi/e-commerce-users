@@ -5,7 +5,7 @@ import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import IUserRepository from '../../repositories/userRepository';
 import UseCaseInterface from '../protocols';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { userRolesCreated } from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
 
 export default class AddRolesToUser
@@ -68,8 +68,8 @@ export default class AddRolesToUser
 
       // Publish to message queue
       try {
-        await this.providers.messageBroker.publish({
-          topic: kafkaTopics.rolesAddedToUser,
+        this.providers.messageBroker.publish({
+          topic: userRolesCreated,
           message: JSON.stringify({
             user: data.userId,
             newRoles: data.roles,

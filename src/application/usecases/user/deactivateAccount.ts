@@ -1,11 +1,7 @@
 import { ResponseCodes } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
-import {
-  sendEmail,
-  sendMessage,
-  userUpdated,
-} from '../../../utils/kafka-topics.json';
+import { userDeactivated } from '../../../utils/kafka-topics.json';
 import IMessageBroker from '../../providers/messageBroker';
 import IUserRepository from '../../repositories/userRepository';
 import IUserTokensRepository from '../../repositories/userTokensRepository';
@@ -45,28 +41,14 @@ export default class DeactivateAccount
         where: { userId: user.id },
       });
 
-      // Publish message of user updated
+      // Publish account deactivated event
       messageBroker.publish({
-        message: JSON.stringify({ data: user, fields: ['isDeleted'] }),
-        topic: userUpdated,
+        message: JSON.stringify({
+          data: user,
+          actor: params.actor,
+        }),
+        topic: userDeactivated,
       });
-
-      const message = `Account deleted successfully. You can still recover this account before [date]. Please contact support if you did not initiate this.`;
-
-      // Publish message to send message and email to user
-      if (user.email) {
-        messageBroker.publish({
-          message: JSON.stringify({ to: user.email, message: message }),
-          topic: sendEmail,
-        });
-      }
-
-      if (user.phone) {
-        messageBroker.publish({
-          message: JSON.stringify({ to: user.phone, message: message }),
-          topic: sendMessage,
-        });
-      }
 
       return {
         success: true,

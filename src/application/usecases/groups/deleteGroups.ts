@@ -65,10 +65,11 @@ export default class RemoveGroups
 
     try {
       await this.messageBroker.publish({
-        topic: options?.hardDelete
-          ? kafkaTopics.groupsDeleted
-          : kafkaTopics.groupsUpdated,
-        message: JSON.stringify({ data: filter.id }),
+        topic: kafkaTopics.groupsDeleted,
+        message: JSON.stringify({
+          data: filter.id,
+          softDelete: !options?.hardDelete,
+        }),
       });
     } catch (err) {
       logger.error((err as Error).message, err);

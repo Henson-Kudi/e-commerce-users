@@ -40,6 +40,7 @@ export default class GetUser
       withGroups: request.query?.withGroups === 'true',
       withRoles: request.query?.withRoles === 'true',
       withTokens: request.query?.withTokens === 'true',
+      withDevices: request.query?.withDevices === 'true',
     });
   }
 }

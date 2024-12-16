@@ -17,6 +17,7 @@ import GetInvitations from '../usecases/invitations/getInvitations';
 import RemoveInvitation from '../usecases/invitations/removeInvitation';
 import AddRolesToUser from '../usecases/user/addRolesToUser';
 import ChangeUserPassword from '../usecases/user/changePassword';
+import CountUsers from '../usecases/user/countUsers';
 import CreateUserUseCase from '../usecases/user/createUser';
 import DeactivateAccount from '../usecases/user/deactivateAccount';
 import DeleteAccount from '../usecases/user/deleteAccount';
@@ -37,12 +38,17 @@ export class UsersService {
     return new GetUsers(this.usersRepository).execute(params);
   }
 
+  countUsers(params: UserQuery) {
+    return new CountUsers(this.usersRepository).execute(params);
+  }
+
   getUser(
     params: Omit<UserQuery, 'search'> & {
       id: string;
       withRoles?: boolean | 'true' | 'false';
       withGroups?: boolean | 'true' | 'false';
       withTokens?: boolean | 'true' | 'false';
+      withDevices?: boolean | 'true' | 'false';
     }
   ) {
     return new GetUser(this.usersRepository).execute(params);
@@ -79,6 +85,7 @@ export class UsersService {
       messageBroker,
     }).execute(params);
   }
+
   updateUser(params: {
     filter: Omit<UserQuery, 'search'> & {
       id: string;
@@ -155,6 +162,7 @@ export class UsersService {
       tokenManager
     ).execute(params);
   }
+
   getInvitations(params: {
     filter?: {
       invitor?: string | string[];

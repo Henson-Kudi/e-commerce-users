@@ -66,7 +66,8 @@ RUN apk --no-cache add \
       cyrus-sasl-dev \
       openssl-dev \
       make \
-      python3
+      python3 \
+      openssl1.1-compat
 
 # Add build deps required by node-kafka
 RUN apk add --no-cache --virtual .build-deps gcc zlib-dev libc-dev bsd-compat-headers py-setuptools bash
@@ -79,6 +80,7 @@ COPY --chown=node:node --from=builder /app/package*.json ./
 COPY --chown=node:node --from=builder /app/.env ./
 COPY --chown=node:node --from=builder /app/kafkaclient.properties ./
 COPY --chown=node:node --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/prisma ./p
 
 # Create logs directory
 RUN mkdir logs

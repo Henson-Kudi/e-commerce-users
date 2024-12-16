@@ -6,10 +6,9 @@ import IInvitationsRepository from '../../repositories/invitationsRepository';
 import UseCaseInterface from '../protocols';
 import Joi from 'joi';
 import ErrorClass from '../../../domain/valueObjects/customError';
-import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
+import { Errors, ResponseCodes } from '../../../domain/enums';
 import IMessageBroker from '../../providers/messageBroker';
-import kafkaTopics from '../../../utils/kafka-topics.json';
-import envConf from '../../../utils/env.conf';
+import { invitationCreated } from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
 import ITokenManager from '../../providers/jwtManager';
 import IUserRepository from '../../repositories/userRepository';
@@ -61,6 +60,40 @@ export default class CreateInvitation
         };
       }
 
+      if (invitor.email === params.invitee) {
+        return {
+          success: false,
+          message: 'You cannot invite yourself',
+          error: new ErrorClass(
+            'You cannot invite yourself',
+            ResponseCodes.BadRequest,
+            null,
+            Errors.BadRequest
+          ),
+        };
+      }
+
+      // ensure invitation does not already exist for this user
+      const count = await this.repository.count({
+        where: {
+          invitee: params.invitee,
+          invitorId: invitor.id,
+        },
+      });
+
+      if (count > 0) {
+        return {
+          success: false,
+          message: 'Invitation already exists',
+          error: new ErrorClass(
+            'Invitation already exists',
+            ResponseCodes.BadRequest,
+            null,
+            Errors.BadRequest
+          ),
+        };
+      }
+
       const expiryDate = moment().add(2, 'weeks').toDate();
 
       const created = await this.repository.createUpsert({
@@ -83,12 +116,9 @@ export default class CreateInvitation
 
       //   Inform message broker to send email to invitee. Note that user should be able to accept invitation only after successfully registering
       try {
-        await this.messageBroker.publish({
-          topic: kafkaTopics.sendEmail,
-          message: JSON.stringify({
-            to: params.invitee,
-            message: `You have been invited to join ${envConf.AppName}. Click this link to accept or decline invitation: ${envConf.frontEndUrl}/invitations?token=${this.tokenManager.generateToken(TokenType.REFRESH_TOKEN, { invitorId: created.id })}`,
-          }),
+        this.messageBroker.publish({
+          topic: invitationCreated,
+          message: JSON.stringify(created),
         });
       } catch (err) {
         logger.error((err as Error).message, err);

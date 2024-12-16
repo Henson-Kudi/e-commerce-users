@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { UserEntity, TokenEntity } from '../../../domain/entities';
+import { UserEntity } from '../../../domain/entities';
 import { Errors, ResponseCodes, TokenType } from '../../../domain/enums';
 import ErrorClass from '../../../domain/valueObjects/customError';
 import IReturnValue from '../../../domain/valueObjects/returnValue';
@@ -8,40 +8,39 @@ import UseCaseInterface from '../protocols';
 import humanInterval from 'human-interval';
 import envConf from '../../../utils/env.conf';
 import IUserTokensRepository from '../../repositories/userTokensRepository';
+import IMessageBroker from '../../providers/messageBroker';
+import logger from '../../../utils/logger';
+import { refreshedAccessToken } from '../../../utils/kafka-topics.json';
 
 export default class RefreshAccessToken
   implements
     UseCaseInterface<
       { userId: string; device: string; ip: string; token: string },
-      IReturnValue<UserEntity & { tokens: TokenEntity[] }>
+      IReturnValue<
+        UserEntity & {
+          refreshToken: { token: string; expireAt: Date };
+          accessToken: { token: string; expireAt: Date };
+        }
+      >
     >
 {
   constructor(
     private readonly repository: IUserTokensRepository,
     private readonly providers: {
       jwtManager: ITokenManager;
+      messageBroker: IMessageBroker;
     }
   ) {}
 
-  async execute(params: {
-    device: string;
-    ip: string;
-    token: string;
-  }): Promise<IReturnValue<UserEntity & { tokens: TokenEntity[] }>> {
+  async execute(params: { token: string }): Promise<
+    IReturnValue<
+      UserEntity & {
+        refreshToken: { token: string; expireAt: Date };
+        accessToken: { token: string; expireAt: Date };
+      }
+    >
+  > {
     const { jwtManager } = this.providers;
-
-    if (!params.device || !params.ip || !params.token) {
-      return {
-        success: false,
-        error: new ErrorClass(
-          'Invalid params',
-          ResponseCodes.BadRequest,
-          null,
-          Errors.BadRequest
-        ),
-        message: 'Invalid params',
-      };
-    }
 
     try {
       // Ensure token is valid
@@ -68,8 +67,6 @@ export default class RefreshAccessToken
         await this.repository.find({
           where: {
             userId: decodedToken.userId,
-            ip: params.ip,
-            device: params.device,
             type: TokenType.REFRESH_TOKEN,
             token: params.token,
           },
@@ -94,21 +91,13 @@ export default class RefreshAccessToken
         };
       }
 
-      // delete token
-      await this.repository.deleteMany({
-        where: { userId: decodedToken.userId },
-      });
+      // refresh the refresh token if its 10mins to its expiry
+      const diff = moment(token.expireAt).diff(moment(), 'minutes');
 
       // Create new tokens
       const accessExpiry = Math.floor(
         humanInterval(
           `${envConf.JWT.AccessToken.expiration.value} ${envConf.JWT.AccessToken.expiration.unit}`
-        )! / 1000
-      );
-
-      const refreshExpiry = Math.floor(
-        humanInterval(
-          `${envConf.JWT.RefreshToken.expiration.value} ${envConf.JWT.RefreshToken.expiration.unit}`
         )! / 1000
       );
 
@@ -118,39 +107,60 @@ export default class RefreshAccessToken
         { expiresIn: accessExpiry }
       );
 
-      const refreshToken = jwtManager.generateToken(
-        TokenType.REFRESH_TOKEN,
-        { userId: decodedToken.userId },
-        { expiresIn: refreshExpiry }
-      );
+      let refreshToken = {
+        token: token.token,
+        expireAt: moment(token.expireAt).toDate(),
+      };
 
-      const newToken = await this.repository.create({
-        data: {
-          token: refreshToken,
-          type: TokenType.REFRESH_TOKEN,
-          device: params.device,
-          ip: params.ip,
-          userId: decodedToken.userId,
-          expireAt: moment().add(refreshExpiry, 'seconds').toDate(),
-        },
-      });
+      // if token is left 30mins or less to expiry, then refresh it by updating existing token
+      if (diff <= 20) {
+        const refreshExpiry = Math.floor(
+          humanInterval(
+            `${envConf.JWT.RefreshToken.expiration.value} ${envConf.JWT.RefreshToken.expiration.unit}`
+          )! / 1000
+        );
+        const tokenExpiryDate = moment().add(refreshExpiry, 'seconds').toDate();
+
+        refreshToken = {
+          token: jwtManager.generateToken(
+            TokenType.REFRESH_TOKEN,
+            { userId: decodedToken.userId },
+            { expiresIn: refreshExpiry }
+          ),
+          expireAt: tokenExpiryDate,
+        };
+
+        await this.repository.update({
+          where: { id: token.id },
+          data: {
+            token: refreshToken.token,
+            expireAt: tokenExpiryDate,
+          },
+        });
+      }
+
+      try {
+        this.providers.messageBroker.publish({
+          topic: refreshedAccessToken,
+          message: JSON.stringify({
+            userId: token.user!.id,
+            refreshToken: refreshToken.token,
+            accessToken: accessToken,
+          }),
+        });
+      } catch (err) {
+        logger.error((err as Error).message, err);
+      }
 
       return {
         success: true,
         data: {
           ...token.user!,
-          tokens: [
-            newToken,
-            {
-              token: accessToken,
-              type: TokenType.ACCESS_TOKEN,
-              device: params.device,
-              ip: params.ip,
-              expireAt: moment().add(accessExpiry, 'seconds').toDate(),
-              id: '',
-              userId: decodedToken.userId,
-            },
-          ],
+          refreshToken,
+          accessToken: {
+            token: accessToken,
+            expireAt: moment().add(accessExpiry, 'seconds').toDate(),
+          },
         },
         message: 'Access token refreshed successfully',
       };

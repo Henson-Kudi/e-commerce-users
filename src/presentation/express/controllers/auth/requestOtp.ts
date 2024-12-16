@@ -2,6 +2,7 @@ import IReturnValue from '../../../../domain/valueObjects/returnValue';
 import IContoller from '../IController';
 import { AuthService } from '../../../../application/services/authService';
 import RequestObject from '../../../../utils/types/request';
+import { OTP_Types } from '../../../../domain/enums';
 
 export default class RequestOtp
   implements IContoller<IReturnValue<{ userId: string; sent: boolean }>>
@@ -14,8 +15,7 @@ export default class RequestOtp
       userId: request.body.userId,
       email: request.body.email,
       phone: request.body.phone,
-      device: request.headers!['user-agent'],
-      ip: request.ip,
+      type: request.body.otpType ?? OTP_Types.Email_Verification,
     };
 
     return this.authService.requestOtp(data);

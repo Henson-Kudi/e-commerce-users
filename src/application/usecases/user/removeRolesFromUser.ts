@@ -4,7 +4,7 @@ import IReturnValue from '../../../domain/valueObjects/returnValue';
 import IMessageBroker from '../../providers/messageBroker';
 import IUserRepository from '../../repositories/userRepository';
 import UseCaseInterface from '../protocols';
-import kafkaTopics from '../../../utils/kafka-topics.json';
+import { userRolesDeleted } from '../../../utils/kafka-topics.json';
 import logger from '../../../utils/logger';
 import { UserQuery } from '../../../domain/dtos/user/IFindUser';
 import { RoleEntity, UserEntity } from '../../../domain/entities';
@@ -69,7 +69,7 @@ export default class RemoveRolesFromUser
       // Publish message
       try {
         await messageBroker.publish({
-          topic: kafkaTopics.rolesRemovedFromUser,
+          topic: userRolesDeleted,
           message: JSON.stringify({
             user: filter.id,
             removedRoles: data.roles,

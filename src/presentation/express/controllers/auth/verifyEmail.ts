@@ -13,6 +13,13 @@ export default class VerifyEmail
       token: request.body.code,
       id: request.body.userId,
       email: request.body.email,
+      deviceIp: request.headers.deviceIp?.toString(),
+      userAgent: request.headers.userAgent?.toString(),
+      deviceType: request.headers.deviceType?.toString(),
+      os: request.headers.os?.toString(),
+      browser: request.headers.browser?.toString(),
+      location: request.headers.location?.toString(),
+      isLoggedIn: request.headers.authorization?.toString() ? true : false,
     });
   }
 }

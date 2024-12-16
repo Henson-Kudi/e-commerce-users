@@ -13,6 +13,10 @@ import IRoleRepository from '../../../application/repositories/roleRepository';
 export default class RolesRepository implements IRoleRepository {
   private readonly dbClient: RolesDbClient = prisma.role;
 
+  deleteRole(id: string): Promise<RoleEntity | null> {
+    return this.dbClient.delete({ where: { id } });
+  }
+
   count(query: FindRolesQuery): Promise<number> {
     return this.dbClient.count({
       where: query.where,

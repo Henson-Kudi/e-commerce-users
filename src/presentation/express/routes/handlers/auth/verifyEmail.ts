@@ -2,6 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import expressAdapter from '../../../../adapters/expressAdapter';
 import auth from '../../../controllers/auth';
 import { ResponseCodes } from '../../../../../domain/enums';
+import {
+  RefreshTokenName,
+  RefreshTokenOptions,
+} from '../../../../../utils/constants/tokens';
+import IReturnValue from '../../../../../domain/valueObjects/returnValue';
+import { UserEntity } from '../../../../../domain/entities';
 
 export default async function verifyEmail(
   req: Request,
@@ -9,13 +15,33 @@ export default async function verifyEmail(
   next: NextFunction
 ) {
   try {
-    const result = await expressAdapter(req, auth.verifyEmail);
+    const result = (await expressAdapter(
+      req,
+      auth.verifyEmail
+    )) as unknown as IReturnValue<
+      UserEntity & {
+        refreshToken?: { token?: string; expireAt: string | Date };
+        accessToken?: { token?: string; expireAt: string | Date };
+      }
+    >;
 
     if (!result.success) {
       throw result.error;
     }
 
-    return res.status(ResponseCodes.Success).json(result);
+    if (result.data?.refreshToken) {
+      const refreshToken = result.data?.refreshToken;
+
+      res.cookie(RefreshTokenName, refreshToken?.token, RefreshTokenOptions);
+    }
+
+    return res.status(ResponseCodes.Success).json({
+      ...result,
+      data: {
+        ...result.data,
+        password: undefined,
+      },
+    });
   } catch (err) {
     next(err);
   }

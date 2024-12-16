@@ -37,7 +37,7 @@ export default function authenticateRequest(
       // Verify token
       const verifiedToken = await authService.authenticateJwt({
         token,
-        type: tokenType,
+        type: tokenType||TokenType.ACCESS_TOKEN,
       });
 
       if (
@@ -59,6 +59,9 @@ export default function authenticateRequest(
       // Add user related data to request headers
       req.headers.userId = verifiedToken.data.id;
       req.headers.userRoles = verifiedToken.data.roles?.map((t) => t.id);
+
+      req.headers['user-id'] = verifiedToken.data.id;
+      req.headers['user-roles'] = verifiedToken.data.roles?.map((t) => t.id);
 
       next();
     } catch (error) {

@@ -10,7 +10,7 @@ import IMessageBroker from '../../providers/messageBroker';
 import { DefaultUserFieldsToSelect } from '../../../utils/constants/user';
 import IUserRepository from '../../repositories/userRepository';
 import IUserTokensRepository from '../../repositories/userTokensRepository';
-import { userUpdated } from '../../../utils/kafka-topics.json';
+import { userEmailChanged } from '../../../utils/kafka-topics.json';
 
 export default class UpdateUserEmail
   implements
@@ -104,11 +104,8 @@ export default class UpdateUserEmail
 
       // Publish with message broker
       messageBroker.publish({
-        topic: userUpdated,
-        message: JSON.stringify({
-          data: updated,
-          fields: ['email'],
-        }),
+        topic: userEmailChanged,
+        message: JSON.stringify(updated),
       });
 
       return {
