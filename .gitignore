@@ -16,3 +16,6 @@ logs
 kafkaclient.properties
 *.http
 Dockerfile-dev
+
+# certificates
+certs

@@ -15,7 +15,7 @@ const PORT = envConf.PORT;
 
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: (req, cb) => cb(null, true),
     credentials: true,
   })
 );

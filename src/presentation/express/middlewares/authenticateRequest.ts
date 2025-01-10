@@ -23,7 +23,7 @@ export default function authenticateRequest(
         );
       }
 
-      token = token.split(' ')[1];
+      token = (token.split(' ')[1])?.trim();
 
       if (!token) {
         throw new ErrorClass(
@@ -37,7 +37,7 @@ export default function authenticateRequest(
       // Verify token
       const verifiedToken = await authService.authenticateJwt({
         token,
-        type: tokenType||TokenType.ACCESS_TOKEN,
+        type: tokenType || TokenType.ACCESS_TOKEN,
       });
 
       if (
